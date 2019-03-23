@@ -30,6 +30,7 @@ const styles = StyleSheet.create({
         borderBottomWidth: .3,
         borderColor: '#ddd',
         flex: 1,
+        backgroundColor: '#fff',
     },
     textInputLabel: {
         fontSize: 14,

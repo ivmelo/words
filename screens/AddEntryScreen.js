@@ -5,13 +5,13 @@ import FormInput from '../components/FormInput';
 import FormHeader from '../components/FormHeader';
 import FormDateInput from '../components/FormDateInput';
 import Entry from '../models/Entry';
+import {ToastAndroid} from 'react-native';
 
 class AddEntryScreen extends React.Component {
     state = {
         entry: {
             entryText: '',
             date: new Date().getTime(),
-            created_at: new Date().getTime(),
         }
     }
 
@@ -48,16 +48,14 @@ class AddEntryScreen extends React.Component {
             return;
         }
 
-        let entry = new Entry(this.state.entry.entryText, this.state.entry.date);
+        let entry = new Entry();
+        entry.text = this.state.entry.entryText;
+        entry.date = new Date(this.state.entry.date);
 
-        // console.log(entry);
-
-        entry._save().then((resp) => {
-            // console.log(entry);
-            this.props.navigation.navigate('HomeScreen');
-        });
-
-        // console.log(this.state.entry);
+        entry.save().then(e => {
+            ToastAndroid.show('Entry saved.', ToastAndroid.SHORT);
+            this.props.navigation.goBack();
+        }).catch(err => console.log(err));
     }
 
     render() {
@@ -83,12 +81,6 @@ class AddEntryScreen extends React.Component {
                     }))}
                 ></FormInput>
             </ScrollView>
-            // <View style={styles.mainView}>
-            //     <FormHeader title="Entry Details"></FormHeader>
-            //     <FormInput label="Name"></FormInput>
-            //     <FormDateInput label="Name"></FormDateInput>
-            //     {/* <TextInput multiline={true} style={styles.textInput} value={this.state.entryText} onChangeText={(text) => this.setState({entryText: text})} scrollEnabled={false}></TextInput> */}
-            // </View>
         )
     }
 }
@@ -98,10 +90,6 @@ var styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#f9f9f9',
     },
-    // textInput: {
-    //     flex: 1, 
-    //     textAlignVertical: 'top',
-    // }
 });
 
 export default AddEntryScreen;

@@ -1,60 +1,41 @@
-import {AsyncStorage} from 'react-native';
+import SweetModel from 'react-native-sweet-record';
+// import SweetModel from './SweetModel';
 
-class Entry {
-    static entries = [];
+const defaults = {
+    text: '',
+    date: new Date()
+}
 
-    text;
-    date;
-    created_at;
-
-    constructor(text, date) {
-        this.text = text;
-        this.date = date;
-        this.created_at = new Date().getTime();
+class Entry extends SweetModel {
+    static databaseName() {
+        return 'words';
     }
 
-    static _saveAll() {
-        return AsyncStorage.setItem('entries', JSON.stringify(Entry.entries))
-            .then(data => data)
-            .catch(error => error);
+    static tableName() {
+        return 'entries';
     }
 
-    _save() {
-        this.created_at = new Date().getTime();
+    static dateFields() {
+        return ['_created_at', '_updated_at'];
+    }
 
-        // Entry.entries = [];
-
-        // console.log(Entry.entries);
-
-        if (Entry.entries.length == 0) {
-            Entry._all().then(entries => {
-                // 
-                // Entry.entries = entries;
-                Entry.entries.push(this);
-                return Entry._saveAll(Entry.entries);
-            });
+    constructor(
+        data = {
+            _id: -1,
+            text: defaults.text,
+            date: defaults.date,
+            _created_at: new Date(),
+            _updated_at: new Date(),
         }
-
-        Entry.entries.push(this);
-        return Entry._saveAll(Entry.entries);
-    }
-
-    static _clear() {
-        return AsyncStorage.removeItem('entries')
-            .then(data => data)
-            .catch(err => err);
-    }
-
-    static _all() {
-        return AsyncStorage.getItem('entries').then((entries) => {
-            if (entries != null && entries.length) {
-                Entry.entries = entries;
-                return JSON.parse(entries);
-            }
-            return [];
-        }).catch(error => {
-            return error;
-        });
+    ) 
+    {
+        super();
+    
+        this._id = data._id;
+        this.text = data.text || defaults.text;
+        this.date = data.date || defaults.date;
+        this._created_at = data._created_at;
+        this._updated_at = data._updated_at;
     }
 }
 
