@@ -1,12 +1,20 @@
 import { AsyncStorage } from 'react-native';
+import { SQLite } from 'expo';
 
 export default class SweetModel {
+
+  /**
+   * Must override DB name.
+   */
   static databaseName() {
-    return "MUST OVERWRITE DBNAME";
+    return ''; // Must override DB Name.
   }
 
+  /**
+   * Must override table name.
+   */
   static tableName() {
-    return "MUST OVERWRITE TABLENAME";
+    return '';
   }
 
   static dateFields() {
@@ -58,7 +66,39 @@ export default class SweetModel {
   }
 }
 
+
+
 SweetModel.get = async function(id, refresh_models = false) {
+  let db = SQLite.openDatabase(this.databaseName() + '.sqlite');
+  
+  return new Promise((resolve, reject) => {
+      db.transaction(async (tx) => {
+        tx.executeSql(
+          'select * from ' + this.tableName() + ' where id = ?'
+      ,[id], (tx, res) => {
+        console.log(res.rows.length);
+        if (res.rows.length) {
+          let data = res.rows._array[0]; // record;
+
+          this.dateFields().forEach((dateField) => {
+            if (data[dateField]) {
+            data[dateField] = new Date(data[dateField]);
+            }
+          });
+
+          let returModel = new this.prototype.constructor(data);
+
+          resolve(returModel);
+        } else {
+          resolve (null);
+        }
+          resolve(res.rows._array);
+      }, (error) => {
+          reject(error);
+      });
+    });
+  });
+
   const value = await AsyncStorage.getItem('@' + this.databaseName() + ':' + this.tableName() + '/' + id.toString());
   if (value !== null){
     let data = JSON.parse(value);
@@ -94,32 +134,27 @@ SweetModel.get = async function(id, refresh_models = false) {
   }
 };
 
-SweetModel.all = async function(sort_field = '_id', sort_order = 'ASC', refresh_models = false) {
-  try {
-    let results = [];
 
-    const allKeys = await AsyncStorage.getAllKeys();
-    for (let i = 0; i < allKeys.length; i++) {
-      let key = allKeys[i];
-      let splitKey = key.split('/');
-      if (splitKey[0] === '@' + this.databaseName() + ':' + this.tableName()) {
-        const key_id = parseInt(splitKey[1]);
-        const joke = await this.get(key_id, refresh_models);
-        results.push(joke);
-      }
-    }
+SweetModel.all = async function(sort_field = 'id', sort_order = 'ASC', refresh_models = false) {
+  let db = SQLite.openDatabase(this.databaseName() + '.sqlite');
 
-    return results.sort((a,b) => {
-        if (a[sort_field] < b[sort_field])
-    return sort_order.toUpperCase() == 'ASC' ? -1 : 1;
-    if (b[sort_field] < a[sort_field])
-      return sort_order.toUpperCase() == 'ASC' ? 1 : -1;
+  let query = 'select * from ' + this.tableName();
 
-    return 0;
-  } );
-  } catch (error) {
-    console.log(error);
+  if (sort_order == 'DESC') {
+    query += ' DESC';
   }
+  
+  return new Promise((resolve, reject) => {
+      db.transaction(async (tx) => {
+        tx.executeSql(
+          query
+      ,[], (tx, res) => {
+          resolve(res.rows._array);
+      }, (error) => {
+          reject(error);
+      });
+    });
+  });
 };
 
 SweetModel.where = async function(filter_hash, operation = 'AND', sort_field = '_id', sort_order= 'ASC', refresh_models = false) {

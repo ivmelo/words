@@ -2,11 +2,29 @@ import React from 'react';
 import {View, StyleSheet, Text, TouchableOpacity, ScrollView, TouchableNativeFeedback} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LocalAuthentication } from 'expo';
+import Calendar from '../components/Calendar';
+import FormInput from '../components/FormInput';
+import FormHeader from '../components/FormHeader';
 
 class SettingsScreen extends React.Component {
     state = {
-        
-    }
+        name: 'Ivanilson',
+        year: 2019,
+        monthEntries: [
+            0,
+            17,
+            16,
+            14,
+            29,
+            22,
+            12,
+            15,
+            17,
+            29,
+            24,
+            23
+        ]
+    };
 
     static navigationOptions = ({navigation}) => {
         return {
@@ -68,12 +86,22 @@ class SettingsScreen extends React.Component {
 
     render() {
         return (
-            <View>
-                <Text style={styles.header}>Hey Ivanilson.</Text>
+            <ScrollView>
+                <Text style={styles.header}>Hey {this.state.name}.</Text>
                 <Text style={styles.subtitle}>You can use the fields below to customise this app to better suit your needs.</Text>
 
+                <FormHeader title="Customization" subtitle="You can use the fields below to customize the app appearance, settings and etc..."></FormHeader>
+                <FormInput label="Your Name"></FormInput>
+
+                <FormHeader title="Security" subtitle="You can secure your notes with a pin or fingerprint. You an also add a layer of security by encripting your notes."></FormHeader>
+                <FormInput label="Pin"></FormInput>
+                <FormInput label="Fingerprints"></FormInput>
+                <FormInput label="Encryption"></FormInput>
+
+
+
                 <Text style={styles.header}>2019</Text>
-                <Text style={styles.subtitle}>JAN</Text>
+                <Text style={styles.subtitle} value={this.state.name} onChangeText={(newText) => this.setState({name: newText})}>JAN</Text>
 
                 <ScrollView style={styles.heatMapScroll} horizontal={true} showsHorizontalScrollIndicator={false}>
                     <View style={styles.heatmap}>
@@ -112,64 +140,17 @@ class SettingsScreen extends React.Component {
                     </View>
                 </ScrollView>
 
-                <View>
-                    <Text style={styles.header}>2019</Text>
-
-                    <View style={styles.calendarRow}>
-                        <TouchableNativeFeedback>
-                            <View style={[styles.calendarBlock, {backgroundColor: colors[0]}]}>
-                                <Text style={styles.calendarLabel}>JAN</Text>
-                            </View>
-                        </TouchableNativeFeedback>
-
-                        <TouchableNativeFeedback>                
-                            <View style={[styles.calendarBlock, {backgroundColor: colors[1]}]}>
-                                <Text style={styles.calendarLabel}>FEB</Text>
-                            </View>
-                        </TouchableNativeFeedback>
-
-                        <View style={[styles.calendarBlock, {backgroundColor: colors[2]}]}>
-                            <Text style={styles.calendarLabel}>MAR</Text>
-                        </View>
-                    </View>
-
-                    <View style={styles.calendarRow}>
-                        <View style={[styles.calendarBlock, {backgroundColor: colors[3]}]}>
-                            <Text style={styles.calendarLabel}>APR</Text>
-                        </View>
-                        <View style={[styles.calendarBlock, {backgroundColor: colors[4]}]}>
-                            <Text style={styles.calendarLabel}>MAY</Text>
-                        </View>
-                        <View style={[styles.calendarBlock, {backgroundColor: colors[5]}]}>
-                            <Text style={styles.calendarLabel}>JUN</Text>
-                        </View>
-                    </View>
-
-                    <View style={styles.calendarRow}>
-                        <View style={[styles.calendarBlock, {backgroundColor: colors[6]}]}>
-                            <Text style={styles.calendarLabel}>JUL</Text>
-                        </View>
-                        <View style={[styles.calendarBlock, {backgroundColor: colors[7]}]}>
-                            <Text style={styles.calendarLabel}>AUG</Text>
-                        </View>
-                        <View style={[styles.calendarBlock, {backgroundColor: colors[8]}]}>
-                            <Text style={styles.calendarLabel}>SEP</Text>
-                        </View>
-                    </View>
-
-                    <View style={styles.calendarRow}>
-                        <View style={[styles.calendarBlock, {backgroundColor: colors[9]}]}>
-                            <Text style={styles.calendarLabel}>OCT</Text>
-                        </View>
-                        <View style={[styles.calendarBlock, {backgroundColor: colors[10]}]}>
-                            <Text style={styles.calendarLabel}>NOV</Text>
-                        </View>
-                        <View style={[styles.calendarBlock, {backgroundColor: colors[11]}]}>
-                            <Text style={styles.calendarLabel}>DEC</Text>
-                        </View>
-                    </View>
-                </View>
-            </View>
+                <Calendar 
+                    onSelectDate={(year, month) => {
+                        this.setState({year: this.state.year + 1});
+                        this.setState({monthEntries: monthEntries2});
+                        console.log(year + '|' + month);
+                    }}
+                    year={this.state.year}
+                    monthEntries={this.state.monthEntries}
+                    >
+                </Calendar>
+            </ScrollView>
         )
     }
 }
@@ -186,7 +167,24 @@ var colors = [
     '#e12b51',
     '#b4357c',
     '#6d3f97',
-    '#464098'
+    '#464098',
+    '#cccccc'
+];
+
+
+var monthEntries2 = [
+    12,
+    1,
+    12,
+    4,
+    9,
+    12,
+    21,
+    0,
+    0,
+    0,
+    0,
+    0
 ];
 
 var styles = StyleSheet.create({
@@ -229,8 +227,13 @@ var styles = StyleSheet.create({
         color: '#fff',
         fontWeight: 'bold',
     },
-
-
+    calendarStats: {
+        color: '#fff',
+        fontSize: 12,
+    },
+    calendarStatsLg: {
+        fontSize: 18,
+    },
 
     heatMapScroll: {
         // marginLeft: 15,
