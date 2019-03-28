@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import EntryPreview from '../components/EntryPreview';
 import Calendar from '../components/Calendar';
 import Entry from '../models/Entry';
+import Migrations from '../migrations/Migrations';
 
 var loremIpsum = require('lorem-ipsum-react-native');
 
@@ -95,18 +96,20 @@ class HomeScreen extends React.Component {
             onPressCalendar: this.onPressCalendar,
         });
 
-        await this.populateEntries(new Date(2019, 0, 1), 5, true);
+        let migrations = new Migrations();
+        await migrations.run();
+
+        // await this.populateEntries(new Date(2019, 0, 1), 5, true);
 
         this.onRefresh();
     }
 
     onPressCalendar = () => {
-        console.log('pressed');
         this.setCalendarModalVisible(true);
     }
 
     onPressAdd = () => {
-        this.props.navigation.navigate('AddEntryScreen');
+        this.props.navigation.navigate('EntryScreen');
     }
 
     onPressSettings = () => {
@@ -114,7 +117,6 @@ class HomeScreen extends React.Component {
     }
 
     onHoldEntry(entryId) {
-        console.log('Holding...');
         Vibration.vibrate(4);
 
         // Works on both iOS and Android
@@ -124,7 +126,7 @@ class HomeScreen extends React.Component {
             [
                 {
                     text: 'Cancel',
-                    onPress: () => console.log('Cancel Pressed'),
+                    onPress: () => {},
                     style: 'cancel',
                 },
                 {
@@ -135,6 +137,10 @@ class HomeScreen extends React.Component {
                 cancelable: true
             },
         );
+    }
+
+    onPressEntry(entryId) {
+        this.props.navigation.navigate('EntryScreen', {entryId});
     }
 
     deleteEntry(entryId) {
@@ -151,6 +157,7 @@ class HomeScreen extends React.Component {
         // Entry.all('date', 'DESC').then(entries => {
         //     this.setState({entries, refreshing: false});
         // });
+        
 
         Entry.all('date', 'DESC').then(entries => {
             this.setState({entries, refreshing: false});
@@ -214,7 +221,8 @@ class HomeScreen extends React.Component {
                             text={entry.entry}
                             day={new Date(entry.date).getDate().toString()}
                             month={new Date(entry.date).getMonth()}
-                            onLongPress={() => this.onHoldEntry(entry.id)}>
+                            onLongPress={() => this.onHoldEntry(entry.id)}
+                            onPress={() => this.onPressEntry(entry.id)}>
                         </EntryPreview>
                     )}
                 </ScrollView>

@@ -6,17 +6,14 @@ import FormDateInput from '../components/FormDateInput';
 import Entry from '../models/Entry';
 import {ToastAndroid} from 'react-native';
 
-class AddEntryScreen extends React.Component {
+class EntryScreen extends React.Component {
     state = {
-        entry: {
-            entryText: '',
-            date: new Date().getTime(),
-        }
+        entry: new Entry()
     }
 
     static navigationOptions = ({navigation}) => {
         return {
-            title: 'New Entry',
+            title: navigation.getParam('entryId', false) ? 'Edit Entry' : 'New Entry',
             headerRight: (
                 <TouchableOpacity onPress={navigation.getParam('onPressSave')}>
                     <View style={{marginRight: 10, width: 40, height: 40, flex: 1, alignItems: 'center', justifyContent: 'center'}}>
@@ -27,10 +24,18 @@ class AddEntryScreen extends React.Component {
         }
     };
 
-    componentDidMount() {
+    async componentDidMount() {
         this.props.navigation.setParams({
             onPressSave: this.onPressSave,
         });
+
+        let entryId = this.props.navigation.getParam('entryId', null);
+
+        if (entryId) {
+            let entry = await Entry.get(entryId);
+            this.setState({entry});
+            console.log(entry);
+        }
     }
 
     onPressSave = () => {
@@ -38,7 +43,9 @@ class AddEntryScreen extends React.Component {
     }
 
     saveEntry() {
-        if (this.state.entry.entryText.trim() == '') {
+        // console.log(this.state.entry);
+
+        if (this.state.entry.entry.trim() == '') {
             // Works on both iOS and Android.
             Alert.alert(
                 'Invalid entry:',
@@ -47,12 +54,13 @@ class AddEntryScreen extends React.Component {
             return;
         }
 
-        let entry = new Entry();
-        entry.entry = this.state.entry.entryText;
-        entry.date = new Date(this.state.entry.date);
+        let entry = new Entry(this.state.entry);
 
+        // If no id, the entry is being updated.
+        let feedbackMsg = this.state.entry.id === null ? 'Entry saved' : 'Entry updated'; 
+        
         entry.save().then(e => {
-            ToastAndroid.show('Entry saved.', ToastAndroid.SHORT);
+            ToastAndroid.show(feedbackMsg, ToastAndroid.SHORT);
             this.props.navigation.goBack();
         }).catch(err => console.log(err));
     }
@@ -61,7 +69,7 @@ class AddEntryScreen extends React.Component {
         return (
             <ScrollView style={styles.mainView}>
                 <FormInput 
-                    value={this.state.entry.entryText} 
+                    value={this.state.entry.entry} 
                     multiline={true}
                     numberOfLines={10}
                     textInputStyle={styles.textInputStyle}
@@ -69,15 +77,15 @@ class AddEntryScreen extends React.Component {
                     onChangeText={(text) => this.setState(prevState => ({
                         entry: {
                             ...prevState.entry,
-                            entryText: text
+                            entry: text
                         }
                     }))}
                 ></FormInput>
-                <FormDateInput label="Date" value={this.state.entry.date}
+                <FormDateInput label="Date" value={this.state.entry.date.getTime()}
                     onChangeDate={(date) => this.setState(prevState => ({
                         entry: {
                             ...prevState.entry,
-                            date: date
+                            date: new Date(date)
                         }
                     }))}
                 ></FormDateInput>
@@ -96,4 +104,4 @@ var styles = StyleSheet.create({
     }
 });
 
-export default AddEntryScreen;
+export default EntryScreen;
