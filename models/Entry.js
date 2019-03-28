@@ -1,41 +1,44 @@
-import SweetModel from 'react-native-sweet-record';
-// import SweetModel from './SweetModel';
+import SimpleModel from './SimpleModel';
 
 const defaults = {
-    text: '',
+    entry: '',
     date: new Date()
 }
 
-class Entry extends SweetModel {
+class Entry extends SimpleModel {
     static databaseName() {
         return 'words';
     }
 
     static tableName() {
-        return 'entries';
+        return 'items';
     }
 
     static dateFields() {
-        return ['_created_at', '_updated_at'];
+        return [
+            'created_at', 
+            'updated_at',
+            'date'
+        ];
     }
 
     constructor(
         data = {
-            _id: -1,
-            text: defaults.text,
+            id: null,
+            entry: defaults.entry,
             date: defaults.date,
-            _created_at: new Date(),
-            _updated_at: new Date(),
+            created_at: new Date(),
+            updated_at: new Date(),
         }
     ) 
     {
         super();
     
-        this._id = data._id;
-        this.text = data.text || defaults.text;
+        this.id = data.id;
+        this.entry = data.entry || defaults.entry;
         this.date = data.date || defaults.date;
-        this._created_at = data._created_at;
-        this._updated_at = data._updated_at;
+        this.created_at = data.created_at;
+        this.updated_at = data.updated_at;
     }
 }
 

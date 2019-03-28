@@ -38,7 +38,7 @@ const styles = StyleSheet.create({
     },
     textInput: {
         fontSize: 18,
-        color: '#333',
+        color: '#333'
     }
 });
 

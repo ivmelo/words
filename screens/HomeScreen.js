@@ -2,11 +2,10 @@ import React from 'react';
 import {ScrollView, Modal, Text, TouchableHighlight, StyleSheet, View, RefreshControl, TouchableOpacity, TouchableNativeFeedback, StatusBar, Vibration, Alert} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import EntryPreview from '../components/EntryPreview';
-import Entry from '../models/Entry';
-import { Contacts } from 'expo';
 import Calendar from '../components/Calendar';
-import { SQLite } from 'expo';
-import EntrySQL from '../models/EntrySQL';
+import Entry from '../models/Entry';
+
+var loremIpsum = require('lorem-ipsum-react-native');
 
 
 class HomeScreen extends React.Component {
@@ -56,13 +55,36 @@ class HomeScreen extends React.Component {
     didBlurSubscription = this.props.navigation.addListener(
         'willFocus',
         payload => {
-            // console.debug('didBlur', payload);
             this.onRefresh();
         }
     );
 
-    _(name, value) {
-        this.setState({[name]: value});
+
+    async populateEntries(start = new Date(), days = 10, ovewrite = true) {
+        if (ovewrite) {
+            await Entry.destroyAll();
+        }
+
+        date = start;
+
+        for (let i = 0; i < days; i ++) {
+            let text = loremIpsum({
+                count: Math.floor(Math.random() * Math.floor(4)),
+                units: 'paragraphs'
+            });
+
+            // Create example entry.
+            let entry = new Entry();
+            entry.entry = text;
+            entry.date = date;
+            await entry.save();
+
+            console.log(i + ' entry created.');
+
+            // Increment 1 day.
+            date.setTime(date.getTime() + 1 * 86400000);
+        }
+
     }
 
 
@@ -73,84 +95,9 @@ class HomeScreen extends React.Component {
             onPressCalendar: this.onPressCalendar,
         });
 
-        // this.props.navigation.navigate('SettingsScreen');
-
-
+        await this.populateEntries(new Date(2019, 0, 1), 5, true);
 
         this.onRefresh();
-
-        // this.setCalendarModalVisible(true);
-        // console.log(this.state.month);
-
-
-
-        let results = await EntrySQL.get(1);
-       
-        console.log(results.created_at);
-
-        // let results = [];
-
-        // let db = SQLite.openDatabase('words.sqlite');
-
-        // console.log(db);
-
-        // console.log('a');
-
-        // db.transaction(tx => {
-        //     // tx.executeSql(
-        //     //     'drop table if exists items'
-        //     // , [], (a, b) => {
-        //     //     console.log(a);
-        //     //     console.log(b);
-        //     // });
-
-        //     // tx.executeSql(
-        //     //     'create table if not exists items (id integer primary key not null, entry text not null, date integer not null, created_at integer not null, updated_at integer not null)'
-        //     // , [], (a, b) => {
-        //     //     console.log(a);
-        //     //     console.log(b);
-        //     // });
-
-
-        //     // tx.executeSql(
-        //     //     'insert into items (entry, date, created_at, updated_at) values (?, ?, ?, ?)'
-        //     // , [
-        //     //     'this is the first entry',
-        //     //     new Date().getTime(),
-        //     //     new Date().getTime(),
-        //     //     new Date().getTime(),
-        //     // ], (a, b) => {
-        //     //     console.log(a);
-        //     //     console.log(b);
-        //     // });
-
-        //     console.log('b');
-
-        //     // tx.executeSql(
-        //     //     'show tables'
-        //     // , [], (a, b) => {
-        //     //     console.log(a);
-        //     //     console.log(b);
-        //     // });
-
-        //     tx.executeSql(
-        //         'select * from items'
-        //     , [], (a, b) => {
-        //         // console.log(a);
-        //         // console.log(results);
-
-        //         console.log('c');
-
-        //         // console.log(b.rows._array);
-        //         // results = b;
-        //     });
-        // });
-
-        // console.log('d');
-
-        // console.log(results);
-        
-
     }
 
     onPressCalendar = () => {
@@ -166,7 +113,7 @@ class HomeScreen extends React.Component {
         this.props.navigation.navigate('SettingsScreen');
     }
 
-    onHoldEntry(entry) {
+    onHoldEntry(entryId) {
         console.log('Holding...');
         Vibration.vibrate(4);
 
@@ -181,7 +128,7 @@ class HomeScreen extends React.Component {
                     style: 'cancel',
                 },
                 {
-                    text: 'OK', onPress: () => this.deleteEntry(entry)
+                    text: 'OK', onPress: () => this.deleteEntry(entryId)
                 },
             ],
             {
@@ -190,10 +137,11 @@ class HomeScreen extends React.Component {
         );
     }
 
-    deleteEntry(entry) {
-        entry.destroy().then(() => {
+    deleteEntry(entryId) {
+        Entry.get(entryId).then(async (entry) => {
+            await entry.destroy();
             this.onRefresh();
-        });
+        }).catch(error => console.log(error));
     }
 
     onRefresh() {
@@ -204,9 +152,11 @@ class HomeScreen extends React.Component {
         //     this.setState({entries, refreshing: false});
         // });
 
-        EntrySQL.all().then(entries => {
+        Entry.all('date', 'DESC').then(entries => {
             this.setState({entries, refreshing: false});
-        })
+        }).catch(error => {
+            console.log(error);
+        });
     }
     
     setCalendarModalVisible(visible) {
@@ -225,12 +175,12 @@ class HomeScreen extends React.Component {
                 </TouchableNativeFeedback>
 
                 <Modal
-                    animationType="slide"
+                    animationType="fade"
                     transparent={true}
                     visible={this.state.calendarModalVisible}
                     onRequestClose={() => {
                         this.setCalendarModalVisible(false);
-                        Alert.alert('Modal has been closed.');
+                        // Alert.alert('Modal has been closed.');
                     }}>
                     <View style={styles.outterModalView}>
                         <View style={styles.innerModalView}>
@@ -264,7 +214,7 @@ class HomeScreen extends React.Component {
                             text={entry.entry}
                             day={new Date(entry.date).getDate().toString()}
                             month={new Date(entry.date).getMonth()}
-                            onLongPress={() => this.onHoldEntry(entry)}>
+                            onLongPress={() => this.onHoldEntry(entry.id)}>
                         </EntryPreview>
                     )}
                 </ScrollView>
