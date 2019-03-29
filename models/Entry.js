@@ -11,7 +11,7 @@ class Entry extends SimpleModel {
     }
 
     static tableName() {
-        return 'items';
+        return 'entries';
     }
 
     static dateFields() {

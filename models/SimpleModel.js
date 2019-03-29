@@ -21,7 +21,7 @@ export default class SimpleModel {
      * The fields that will become Date() instances.
      */
     static dateFields() {
-        return ['created_at', 'updated_at', 'date'];
+        return ['created_at', 'updated_at'];
     }
 
     /**

@@ -5,6 +5,7 @@ import EntryPreview from '../components/EntryPreview';
 import Calendar from '../components/Calendar';
 import Entry from '../models/Entry';
 import Migrations from '../migrations/Migrations';
+import {SQLite} from 'expo';
 
 var loremIpsum = require('lorem-ipsum-react-native');
 
@@ -96,9 +97,8 @@ class HomeScreen extends React.Component {
             onPressCalendar: this.onPressCalendar,
         });
 
-        let migrations = new Migrations();
-        await migrations.run();
-
+        // await Migrations.wipeDatabase();
+        await Migrations.run();
         // await this.populateEntries(new Date(2019, 0, 1), 5, true);
 
         this.onRefresh();
@@ -153,11 +153,6 @@ class HomeScreen extends React.Component {
     onRefresh() {
         console.log('Refreshing...');
         this.setState({refreshing: true});
-
-        // Entry.all('date', 'DESC').then(entries => {
-        //     this.setState({entries, refreshing: false});
-        // });
-        
 
         Entry.all('date', 'DESC').then(entries => {
             this.setState({entries, refreshing: false});
