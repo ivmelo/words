@@ -32,7 +32,7 @@ class EntryScreen extends React.Component {
         let entryId = this.props.navigation.getParam('entryId', null);
 
         if (entryId) {
-            let entry = await Entry.get(entryId);
+            let entry = await Entry.find(entryId);
             this.setState({entry});
             console.log(entry);
         }
@@ -43,8 +43,6 @@ class EntryScreen extends React.Component {
     }
 
     saveEntry() {
-        // console.log(this.state.entry);
-
         if (this.state.entry.entry.trim() == '') {
             // Works on both iOS and Android.
             Alert.alert(

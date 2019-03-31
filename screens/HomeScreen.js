@@ -5,10 +5,18 @@ import EntryPreview from '../components/EntryPreview';
 import Calendar from '../components/Calendar';
 import Entry from '../models/Entry';
 import Migrations from '../migrations/Migrations';
-import {SQLite} from 'expo';
 
 var loremIpsum = require('lorem-ipsum-react-native');
 
+function setYearMonth(year, month) {
+    return (previousState, currentProps) => {
+        return {
+            ...previousState,
+            year: year,
+            month: month
+        };
+    };
+}
 
 class HomeScreen extends React.Component {
     state = {
@@ -18,20 +26,35 @@ class HomeScreen extends React.Component {
 
         year: 2019,
         month: new Date().getMonth(),
+        // monthEntries: [
+        //     0,
+        //     17,
+        //     16,
+        //     14,
+        //     29,
+        //     22,
+        //     12,
+        //     15,
+        //     17,
+        //     29,
+        //     24,
+        //     23
+        // ],
         monthEntries: [
-            0,
-            17,
-            16,
-            14,
-            29,
-            22,
-            12,
-            15,
-            17,
-            29,
-            24,
-            23
-        ]
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        ],
+
     }
 
     static navigationOptions = ({navigation}) => {
@@ -99,9 +122,9 @@ class HomeScreen extends React.Component {
 
         // await Migrations.wipeDatabase();
         await Migrations.run();
-        // await this.populateEntries(new Date(2019, 0, 1), 5, true);
+        // await this.populateEntries(new Date(2019, 0, 1), 365, true);
 
-        this.onRefresh();
+        // this.onRefresh();
     }
 
     onPressCalendar = () => {
@@ -144,21 +167,56 @@ class HomeScreen extends React.Component {
     }
 
     deleteEntry(entryId) {
-        Entry.get(entryId).then(async (entry) => {
+        Entry.find(entryId).then(async (entry) => {
             await entry.destroy();
             this.onRefresh();
         }).catch(error => console.log(error));
     }
 
+    dateSelected(year, month) {
+        // Only update if date has changed.
+        if (year !== this.year && month - 1 !== this.month) {
+            this.setState({year: year, month: month - 1}, () => {
+                this.onRefresh();
+            });
+        }
+        this.setCalendarModalVisible(false);
+    }
+
     onRefresh() {
         console.log('Refreshing...');
         this.setState({refreshing: true});
+        // this.setSa
 
-        Entry.all('date', 'DESC').then(entries => {
+        // Set to and from dates.
+        let fromYear = this.state.year;
+        let fromMonth = this.state.month;
+        
+        let toYear = this.state.year;
+        let toMonth = this.state.month + 1;
+
+        if (fromMonth == 11) {
+            toYear++;
+            toMonth = 0;
+        }
+
+        console.log(fromYear + '/' + fromMonth + ' -> ' + toYear + '/' + toMonth);
+
+        Entry.q()
+        .where('date', '>=', new Date(fromYear, fromMonth, 1).getTime())
+        .where('date', '<', new Date(toYear, toMonth, 1).getTime())
+        .get()
+        .then(entries => {
             this.setState({entries, refreshing: false});
-        }).catch(error => {
-            console.log(error);
-        });
+            // console.log(entries);
+        })
+        .catch(err => console.log(err));
+
+        // Entry.all('date', 'DESC').then(entries => {
+        //     this.setState({entries, refreshing: false});
+        // }).catch(error => {
+        //     console.log(error);
+        // });
     }
     
     setCalendarModalVisible(visible) {
@@ -187,13 +245,7 @@ class HomeScreen extends React.Component {
                     <View style={styles.outterModalView}>
                         <View style={styles.innerModalView}>
                             <Calendar 
-                                onSelectDate={(year, month) => {
-                                    this.setState({year: this.state.year + 1});
-                                    this.setState({year: year, month: month});
-
-                                    console.log(year + '|' + month);
-                                    this.setCalendarModalVisible(false);
-                                }}
+                                onSelectDate={(year, month) => {this.dateSelected(year, month)}}
                                 year={this.state.year}
                                 monthEntries={this.state.monthEntries}
                                 >

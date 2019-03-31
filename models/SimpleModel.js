@@ -2,7 +2,16 @@ import {
     SQLite
 } from 'expo';
 
+import SimpleQuery from './SimpleQuery';
+
 export default class SimpleModel {
+
+    constructor() {
+        this.id = null;
+        this.created_at = null;
+        this.updated_at = null;
+    }
+
     /**
      * Must override DB name.
      */
@@ -141,7 +150,7 @@ export default class SimpleModel {
     /**
      * Gets a specified record by its id.
      */
-    static async get(id) {
+    static async find(id) {
         let db = SQLite.openDatabase(this.databaseName() + '.sqlite');
 
         return new Promise((resolve, reject) => {
@@ -191,80 +200,33 @@ export default class SimpleModel {
     }
 
     /**
-     * Filters a record using a where clause.
+     * Returns a query builder for this model.
      */
-    static async where(filters = [], operation = 'AND', sort_field = 'id', sort_order = 'ASC') {
-        
-        
-        
-        
-        try {
-            let myOperation = operation.toUpperCase();
-            let results = [];
-            let keys = Object.keys(filter_hash);
+    static q() {
+        let sq = new SimpleQuery();
+        sq.setModel(this);
+        return sq;
+    };
 
-            let all_items = await this.all(null, null, refresh_models);
+    static async get(query) {
+        let db = SQLite.openDatabase(this.databaseName() + '.sqlite');
 
-            for (let i = 0; i < all_items.length; i++) {
-                let item = all_items[i];
-
-                if (results.indexOf(item) == -1) {
-                    let add_item = -1;
-
-                    for (let j = 0; j < keys.length; j++) {
-                        let key = keys[j];
-                        let filter = filter_hash[key];
-                        let comparator = filter.split('|')[0];
-                        let value = eval(filter.split('|')[1]);
-
-                        let match = false;
-
-                        switch (comparator.toUpperCase()) {
-                            case 'EQ':
-                                match = (item[key] == value);
-                                break;
-                            case 'GT':
-                                match = (item[key] > value);
-                                break;
-                            case 'GTE':
-                                match = (item[key] >= value);
-                                break;
-                            case 'LT':
-                                match = (item[key] < value);
-                                break;
-                            case 'LTE':
-                                match = (item[key] <= value);
-                                break;
-                            case 'LIKE':
-                                match = value !== '' ? (item[key].toLowerCase().indexOf(value.toLowerCase()) !== -1) : true;
-                                break;
+        return new Promise((resolve, reject) => {
+            db.transaction(async (tx) => {
+                tx.executeSql(
+                    query, [], (tx, res) => {
+                        let results = [];
+                        if (res.rows._array.length) {
+                            res.rows._array.forEach(data => {
+                                results.push(new this.prototype.constructor(data));
+                            });
                         }
+                        resolve(results);
+                    }, (error) => {
+                        reject(error);
+                    });
 
-                        if (match) {
-                            if ((myOperation == 'OR') || (add_item != 0)) {
-                                add_item = 1;
-                            }
-                        } else if (myOperation == 'AND') {
-                            add_item = 0;
-                        }
-                    }
-
-                    if (add_item == 1) {
-                        results.push(item);
-                    }
-                }
-            }
-
-            return results.sort((a, b) => {
-                if (a[sort_field] < b[sort_field])
-                    return sort_order.toUpperCase() == 'ASC' ? -1 : 1;
-                if (b[sort_field] < a[sort_field])
-                    return sort_order.toUpperCase() == 'ASC' ? 1 : -1;
-
-                return 0;
             });
-        } catch (error) {
-            console.log(error);
-        }
+        });
     };
 }
