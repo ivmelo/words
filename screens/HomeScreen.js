@@ -23,43 +23,22 @@ class HomeScreen extends React.Component {
         entries: [],
         refreshing: false,
         calendarModalVisible: false,
-
         year: 2019,
         month: new Date().getMonth(),
-        // monthEntries: [
-        //     0,
-        //     17,
-        //     16,
-        //     14,
-        //     29,
-        //     22,
-        //     12,
-        //     15,
-        //     17,
-        //     29,
-        //     24,
-        //     23
-        // ],
-        monthEntries: [
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null
+        monthEntriesCount: [
+            null, null, null, null, null, null,
+            null, null, null, null, null, null
         ],
-
+        themeColor: '#2ecc71',
+        headerTitle: 'What?'
     }
 
     static navigationOptions = ({navigation}) => {
         return {
-            title: 'Mar 2019',
+            title: navigation.getParam('headerTitle', 'Words'),
+            headerStyle: {
+                backgroundColor: navigation.getParam('themeColor', '#2ecc71'),
+            },
             headerLeft: (
                 <TouchableOpacity onPress={navigation.getParam('onPressSettings')}>
                     <View style={{marginLeft: 10, width: 40, height: 40, flex: 1, alignItems: 'center', justifyContent: 'center'}}>
@@ -104,14 +83,10 @@ class HomeScreen extends React.Component {
             entry.date = date;
             await entry.save();
 
-            console.log(i + ' entry created.');
-
             // Increment 1 day.
             date.setTime(date.getTime() + 1 * 86400000);
         }
-
     }
-
 
     async componentDidMount() {
         this.props.navigation.setParams({
@@ -122,9 +97,10 @@ class HomeScreen extends React.Component {
 
         // await Migrations.wipeDatabase();
         await Migrations.run();
-        // await this.populateEntries(new Date(2019, 0, 1), 365, true);
 
-        // this.onRefresh();
+        // this.populateEntries(new Date(2010, 0, 1), 365 * 10, true);
+
+        // await this.updateEntriesCountByMonth();
     }
 
     onPressCalendar = () => {
@@ -132,11 +108,17 @@ class HomeScreen extends React.Component {
     }
 
     onPressAdd = () => {
-        this.props.navigation.navigate('EntryScreen');
+        this.props.navigation.navigate('EntryScreen', {year: this.state.year, month: this.state.month});
     }
 
     onPressSettings = () => {
         this.props.navigation.navigate('SettingsScreen');
+    }
+
+    setThemeColor(color) {
+        this.setState({themeColor: color});
+        this.props.navigation.setParams({themeColor: color});
+        // this.props.navigation.setParams({headerTitle: 'Hooray!'});
     }
 
     onHoldEntry(entryId) {
@@ -173,20 +155,64 @@ class HomeScreen extends React.Component {
         }).catch(error => console.log(error));
     }
 
-    dateSelected(year, month) {
+    dateSelected(year, month, color) {
+        Vibration.vibrate(4);
+
+        let yearChanged = false;
+        if (year != this.state.year) {
+            yearChanged = true;
+        }
+
+        this.props.navigation.setParams({
+            headerTitle: monthNames[month - 1] + ' ' + year,
+        });
+
+        // this.setThemeColor(color);
+
         // Only update if date has changed.
         if (year !== this.year && month - 1 !== this.month) {
             this.setState({year: year, month: month - 1}, () => {
                 this.onRefresh();
             });
         }
-        this.setCalendarModalVisible(false);
+
+        if (! yearChanged) {
+            this.setCalendarModalVisible(false);
+        }
+    }
+
+    async updateEntriesCountByMonth() {
+        
+        let entryCount = [];
+
+        // this.setState({refreshing: true});
+
+        // Set to and from dates.
+        let fromYear = this.state.year;
+        let toYear = this.state.year;
+
+        for (let m = 0; m < 12; m++) {
+            let fromMonth = m;
+            
+            let toMonth = fromMonth < 12 ? fromMonth + 1 : 0;
+            toYear = fromMonth < 12 ? toYear : toYear + 1;
+            
+            await Entry.q()
+            .where('date', '>=', new Date(fromYear, fromMonth, 1).getTime())
+            .where('date', '<', new Date(toYear, toMonth, 1).getTime())
+            .orderBy('date', 'desc')
+            .get()
+            .then(entries => {
+                entryCount.push(entries.length);
+            })
+            .catch(err => console.log(err));
+        }
+
+        this.setState({monthEntriesCount: entryCount});
     }
 
     onRefresh() {
-        console.log('Refreshing...');
         this.setState({refreshing: true});
-        // this.setSa
 
         // Set to and from dates.
         let fromYear = this.state.year;
@@ -200,36 +226,31 @@ class HomeScreen extends React.Component {
             toMonth = 0;
         }
 
-        console.log(fromYear + '/' + fromMonth + ' -> ' + toYear + '/' + toMonth);
-
         Entry.q()
         .where('date', '>=', new Date(fromYear, fromMonth, 1).getTime())
         .where('date', '<', new Date(toYear, toMonth, 1).getTime())
+        .orderBy('date', 'desc')
         .get()
         .then(entries => {
             this.setState({entries, refreshing: false});
-            // console.log(entries);
         })
         .catch(err => console.log(err));
-
-        // Entry.all('date', 'DESC').then(entries => {
-        //     this.setState({entries, refreshing: false});
-        // }).catch(error => {
-        //     console.log(error);
-        // });
     }
     
     setCalendarModalVisible(visible) {
+        this.updateEntriesCountByMonth();
         this.setState({calendarModalVisible: visible});
     }
 
     render() {
         return (
             <View style={styles.mainView}>
-                <StatusBar backgroundColor="#2ecc71" barStyle="light-content" />
+                <StatusBar backgroundColor={this.state.themeColor} barStyle="light-content" />
 
-                <TouchableNativeFeedback onPress={() => this.onPressAdd()} useForeground={true}  background={TouchableNativeFeedback.Ripple('#aaa', true)}>
-                    <View style={styles.floatingButton}>
+                <TouchableNativeFeedback onLongPress={() => {
+                    this.setThemeColor('#5B3256');
+                }} onPress={() => this.onPressAdd()} useForeground={true}  background={TouchableNativeFeedback.Ripple('#aaa', true)}>
+                    <View style={[styles.floatingButton, {backgroundColor: this.state.themeColor}]}>
                         <Ionicons name="md-add" size={30} style={{color: '#fff'}}/>
                     </View>
                 </TouchableNativeFeedback>
@@ -245,9 +266,10 @@ class HomeScreen extends React.Component {
                     <View style={styles.outterModalView}>
                         <View style={styles.innerModalView}>
                             <Calendar 
-                                onSelectDate={(year, month) => {this.dateSelected(year, month)}}
+                                onSelectDate={(year, month, color) => {this.dateSelected(year, month, color)}}
                                 year={this.state.year}
-                                monthEntries={this.state.monthEntries}
+                                month={this.state.month}
+                                monthEntries={this.state.monthEntriesCount}
                                 >
                             </Calendar>
                         </View>
@@ -277,6 +299,13 @@ class HomeScreen extends React.Component {
         )
     }
 }
+
+const monthNames = [
+    'January', 'February', 'March',
+    'April', 'May', 'June',
+    'July', 'August', 'September',
+    'October', 'November', 'December'
+];
 
 var styles = StyleSheet.create({
     mainView: {

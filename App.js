@@ -4,17 +4,25 @@ import {
 import {
     createStackNavigator,
     createAppContainer,
+    createSwitchNavigator,
     SafeAreaView
 } from 'react-navigation';
+
 import HomeScreen from './screens/HomeScreen';
 import EntryScreen from './screens/EntryScreen';
 import SettingsScreen from './screens/SettingsScreen';
+import AuthScreen from './screens/AuthScreen';
 
-// if (Platform.OS === 'android') {
-//   SafeAreaView.setStatusBarHeight(0);
-// }
 
-const AppNavigator = createStackNavigator({
+if (Platform.OS === 'android') {
+  SafeAreaView.setStatusBarHeight(0);
+}
+
+const AuthStack = createStackNavigator({
+    AuthScreen: AuthScreen
+});
+
+const AppStack = createStackNavigator({
     HomeScreen: {
         screen: HomeScreen,
     },
@@ -34,9 +42,16 @@ const AppNavigator = createStackNavigator({
         },
         headerTintColor: '#fff',
         headerTitleStyle: {
-            fontWeight: 'bold',
+            // fontWeight: 'bold',
         },
     }
 });
 
-export default createAppContainer(AppNavigator);
+// export default createAppContainer(AppStack);
+
+export default createAppContainer(createSwitchNavigator({
+    App: AppStack,
+    Auth: AuthStack,
+}, {
+    initialRouteName: 'Auth',
+}));

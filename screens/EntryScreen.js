@@ -35,6 +35,15 @@ class EntryScreen extends React.Component {
             let entry = await Entry.find(entryId);
             this.setState({entry});
             console.log(entry);
+        } else {
+            let year = this.props.navigation.getParam('year', null);
+            let month = this.props.navigation.getParam('month', null);
+
+            if (this.props.navigation.getParam('year') && this.props.navigation.getParam('month')) {
+                let entry = new Entry();
+                entry.date = new Date(year, month, 1);
+                this.setState({entry});
+            }
         }
     }
 

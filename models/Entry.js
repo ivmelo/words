@@ -22,23 +22,13 @@ class Entry extends SimpleModel {
         ];
     }
 
-    constructor(
-        data = {
-            id: null,
-            entry: defaults.entry,
-            date: defaults.date,
-            created_at: new Date(),
-            updated_at: new Date(),
-        }
-    ) 
-    {
-        super();
-    
-        this.id = data.id;
+    constructor(data = {
+        entry: defaults.entry,
+        date: defaults.date,
+    }) {
+        super(data); // Sets id and date fields inside parent object.
         this.entry = data.entry || defaults.entry;
         this.date = data.date || defaults.date;
-        this.created_at = data.created_at;
-        this.updated_at = data.updated_at;
     }
 }
 

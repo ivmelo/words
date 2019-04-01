@@ -36,30 +36,44 @@ class Calendar extends React.Component {
     render() {
         return (
             <View>
-                <Text style={styles.header}>{this.props.year}</Text>
+                <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
+                    <TouchableOpacity onPress={() => this.props.onSelectDate(this.props.year - 1, this.props.month + 1, colors[0])} disabled={this.props.year === 2010}>
+                        <View style={{paddingVertical: 15, paddingHorizontal: 20}}>
+                            <Ionicons name="md-arrow-back" size={30} style={{color: this.props.year === 2010 ? '#888' : '#111'}}/>
+                        </View>
+                    </TouchableOpacity>
 
-                <View style={styles.calendarRow}>
-                    <CalendarBlock title="Jan" bgColor={colors[0]} total={31} amount={this.props.monthEntries[0]} onPress={() => this.props.onSelectDate(this.props.year, 1)}></CalendarBlock>
-                    <CalendarBlock title="Feb" bgColor={colors[1]} total={new Date(this.props.year, 2, 0).getDate()} amount={this.props.monthEntries[1]} onPress={() => this.props.onSelectDate(this.props.year, 2)}></CalendarBlock>
-                    <CalendarBlock title="Mar" bgColor={colors[2]} total={31} amount={this.props.monthEntries[2]} onPress={() => this.props.onSelectDate(this.props.year, 3)}></CalendarBlock>
+                    <Text style={styles.header}>{this.props.year}</Text>
+
+                    <TouchableOpacity onPress={() => this.props.onSelectDate(this.props.year + 1, this.props.month + 1, colors[0])} disabled={this.props.year === new Date().getFullYear()}>
+                        <View style={{paddingVertical: 15, paddingHorizontal: 20}}>
+                            <Ionicons name="md-arrow-forward" size={30} style={{color: this.props.year === new Date().getFullYear() ? '#888' : '#111'}}/>
+                        </View>
+                    </TouchableOpacity>
                 </View>
 
                 <View style={styles.calendarRow}>
-                    <CalendarBlock title="Apr" bgColor={colors[3]} total={30} amount={this.props.monthEntries[3]} onPress={() => this.props.onSelectDate(this.props.year, 4)}></CalendarBlock>
-                    <CalendarBlock title="May" bgColor={colors[4]} total={31} amount={this.props.monthEntries[4]} onPress={() => this.props.onSelectDate(this.props.year, 5)}></CalendarBlock>
-                    <CalendarBlock title="Jun" bgColor={colors[5]} total={30} amount={this.props.monthEntries[5]} onPress={() => this.props.onSelectDate(this.props.year, 6)}></CalendarBlock>
+                    <CalendarBlock title="Jan" bgColor={colors[0]} total={31} amount={this.props.monthEntries[0]} onPress={() => this.props.onSelectDate(this.props.year, 1, colors[0])}></CalendarBlock>
+                    <CalendarBlock title="Feb" bgColor={colors[1]} total={new Date(this.props.year, 2, 0).getDate()} amount={this.props.monthEntries[1]} onPress={() => this.props.onSelectDate(this.props.year, 2, colors[1])}></CalendarBlock>
+                    <CalendarBlock title="Mar" bgColor={colors[2]} total={31} amount={this.props.monthEntries[2]} onPress={() => this.props.onSelectDate(this.props.year, 3, colors[2])}></CalendarBlock>
                 </View>
 
                 <View style={styles.calendarRow}>
-                    <CalendarBlock title="Jul" bgColor={colors[6]} total={31} amount={this.props.monthEntries[6]} onPress={() => this.props.onSelectDate(this.props.year, 7)}></CalendarBlock>
-                    <CalendarBlock title="Aug" bgColor={colors[7]} total={31} amount={this.props.monthEntries[7]} onPress={() => this.props.onSelectDate(this.props.year, 8)}></CalendarBlock>
-                    <CalendarBlock title="Sep" bgColor={colors[8]} total={30} amount={this.props.monthEntries[8]} onPress={() => this.props.onSelectDate(this.props.year, 9)}></CalendarBlock>
+                    <CalendarBlock title="Apr" bgColor={colors[3]} total={30} amount={this.props.monthEntries[3]} onPress={() => this.props.onSelectDate(this.props.year, 4, colors[3])}></CalendarBlock>
+                    <CalendarBlock title="May" bgColor={colors[4]} total={31} amount={this.props.monthEntries[4]} onPress={() => this.props.onSelectDate(this.props.year, 5, colors[4])}></CalendarBlock>
+                    <CalendarBlock title="Jun" bgColor={colors[5]} total={30} amount={this.props.monthEntries[5]} onPress={() => this.props.onSelectDate(this.props.year, 6, colors[5])}></CalendarBlock>
                 </View>
 
                 <View style={styles.calendarRow}>
-                    <CalendarBlock title="Oct" bgColor={colors[9]} total={31} amount={this.props.monthEntries[9]} onPress={() => this.props.onSelectDate(this.props.year, 10)}></CalendarBlock>
-                    <CalendarBlock title="Nov" bgColor={colors[10]} total={30} amount={this.props.monthEntries[10]} onPress={() => this.props.onSelectDate(this.props.year, 11)}></CalendarBlock>
-                    <CalendarBlock title="Dec" bgColor={colors[11]} total={31} amount={this.props.monthEntries[11]} onPress={() => this.props.onSelectDate(this.props.year, 12)}></CalendarBlock>
+                    <CalendarBlock title="Jul" bgColor={colors[6]} total={31} amount={this.props.monthEntries[6]} onPress={() => this.props.onSelectDate(this.props.year, 7, colors[6])}></CalendarBlock>
+                    <CalendarBlock title="Aug" bgColor={colors[7]} total={31} amount={this.props.monthEntries[7]} onPress={() => this.props.onSelectDate(this.props.year, 8, colors[7])}></CalendarBlock>
+                    <CalendarBlock title="Sep" bgColor={colors[8]} total={30} amount={this.props.monthEntries[8]} onPress={() => this.props.onSelectDate(this.props.year, 9, colors[8])}></CalendarBlock>
+                </View>
+
+                <View style={styles.calendarRow}>
+                    <CalendarBlock title="Oct" bgColor={colors[9]} total={31} amount={this.props.monthEntries[9]} onPress={() => this.props.onSelectDate(this.props.year, 10, colors[9])}></CalendarBlock>
+                    <CalendarBlock title="Nov" bgColor={colors[10]} total={30} amount={this.props.monthEntries[10]} onPress={() => this.props.onSelectDate(this.props.year, 11, colors[10])}></CalendarBlock>
+                    <CalendarBlock title="Dec" bgColor={colors[11]} total={31} amount={this.props.monthEntries[11]} onPress={() => this.props.onSelectDate(this.props.year, 12, colors[11])}></CalendarBlock>
                 </View>
             </View>
         )
@@ -94,9 +108,6 @@ var styles = StyleSheet.create({
         paddingHorizontal: 15,
         color: '#333'
     },
-
-
-
 
     calendarRow: {
         flexDirection: 'row',

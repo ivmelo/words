@@ -6,10 +6,10 @@ import SimpleQuery from './SimpleQuery';
 
 export default class SimpleModel {
 
-    constructor() {
-        this.id = null;
-        this.created_at = null;
-        this.updated_at = null;
+    constructor(data) {
+        this.id = data.id || null;
+        this.created_at = data.created_at || null;
+        this.updated_at = data.updated_at || null;
     }
 
     /**
@@ -64,6 +64,14 @@ export default class SimpleModel {
      * Saves the current model in the database.
      */
     async save() {
+        // Set the updated_at field for every db operation.
+        this.updated_at = new Date();
+
+        // If we're creating the record, set the created_at field as well.
+        if (! this.id) {
+            this.created_at = new Date(this.updated_at.getTime());
+        }
+
         let properties = Object.getOwnPropertyNames(this);
         let dateFields = this.constructor.dateFields();
         let values = [];
@@ -78,7 +86,6 @@ export default class SimpleModel {
             if (dateFields.indexOf(property) !== -1) {
                 let timestamp = this[property].getTime();
                 values.push(timestamp);
-                console.log(timestamp);
             } else {
                 values.push(this[property]);
             }
@@ -86,11 +93,11 @@ export default class SimpleModel {
         });
 
         // If there's no ID, then the record is being inserted.
-        if (this.id === null) {
-            query = 'insert into ' + this.constructor.tableName() + ' (' + properties.join(', ') + ') values (' + placeholders.join(', ') + ')';
-        } else {
-            query = 'update ' + this.constructor.tableName() + ' set ' + properties.join(' = ?, ') + ' = ? where id = ?'; // Primary key.
+        if (this.id) {
             values.push(this.id);
+            query = 'update ' + this.constructor.tableName() + ' set ' + properties.join(' = ?, ') + ' = ? where id = ?'; // Primary key.
+        } else {
+            query = 'insert into ' + this.constructor.tableName() + ' (' + properties.join(', ') + ') values (' + placeholders.join(', ') + ')';
         }
 
         // The usual DB stuff.
@@ -157,7 +164,6 @@ export default class SimpleModel {
             db.transaction(async (tx) => {
                 tx.executeSql(
                     'select * from ' + this.tableName() + ' where id = ?', [id], (tx, res) => {
-                        console.log(res.rows.length);
                         if (res.rows.length) {
                             let data = res.rows._array[0]; // record;
 

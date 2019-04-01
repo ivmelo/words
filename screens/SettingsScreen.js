@@ -1,54 +1,27 @@
 import React from 'react';
-import {View, StyleSheet, Text, TouchableOpacity, ScrollView, TouchableNativeFeedback} from 'react-native';
+import {View, StyleSheet, AsyncStorage, TouchableOpacity, ScrollView, TouchableNativeFeedback} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { LocalAuthentication } from 'expo';
 import Calendar from '../components/Calendar';
 import FormInput from '../components/FormInput';
 import FormHeader from '../components/FormHeader';
+import FormSwitch from '../components/FormSwitch';
 
 class SettingsScreen extends React.Component {
     state = {
         name: 'Ivanilson',
-        year: 2019,
-        monthEntries: [
-            0,
-            17,
-            16,
-            14,
-            29,
-            22,
-            12,
-            15,
-            17,
-            29,
-            24,
-            23
-        ]
+        fingerprintLock: false,
     };
 
     static navigationOptions = ({navigation}) => {
         return {
             title: 'Settings',
-            headerRight: (
-                <View style={{marginRight: 15}}>
-                    <TouchableOpacity onPress={navigation.getParam('onPressAdd')}>
-                        <Ionicons name="md-checkmark" size={25} style={{color: '#fff'}}/>
-                    </TouchableOpacity>
-                </View>
-            )
         }
     };
 
-    componentDidMount() {
-        LocalAuthentication.hasHardwareAsync().then((hasHardware => {
-            console.log(hasHardware);
-
-            console.log('please, place fingerprint!');
-
-            LocalAuthentication.authenticateAsync().then(authenticated => {
-                console.log(authenticated);
-            }).catch(error => console.log(error));
-        })).catch(error => console.log(error));
+    async componentDidMount() {
+        let needsAuth = await AsyncStorage.getItem('auth_enabled');
+        console.log(needsAuth);
+        console.log(typeof needsAuth);
     }
 
     daysInMonth (month, year) {
@@ -87,23 +60,32 @@ class SettingsScreen extends React.Component {
     render() {
         return (
             <ScrollView>
-                <Text style={styles.header}>Hey {this.state.name}.</Text>
-                <Text style={styles.subtitle}>You can use the fields below to customise this app to better suit your needs.</Text>
+                {/* <Text style={styles.header}>Hey {this.state.name}.</Text>
+                <Text style={styles.subtitle}>You can use the fields below to customise this app to better suit your needs.</Text> */}
 
-                <FormHeader title="Customization" subtitle="You can use the fields below to customize the app appearance, settings and etc..."></FormHeader>
-                <FormInput label="Your Name"></FormInput>
+                <FormHeader title="Preference's" subtitle="You can use the fields below to customize the app appearance, settings and etc..."></FormHeader>
+                <FormInput label="Your Name" value={this.state.name} onChangeText={(newText) => this.setState({name: newText})}></FormInput>
 
                 <FormHeader title="Security" subtitle="You can secure your notes with a pin or fingerprint. You an also add a layer of security by encripting your notes."></FormHeader>
                 <FormInput label="Pin"></FormInput>
-                <FormInput label="Fingerprints"></FormInput>
                 <FormInput label="Encryption"></FormInput>
 
+                <FormInput label="Fingerprints"></FormInput>
+
+                <FormSwitch description="Fingerprint lock" thumbColor="#2ecc71" value={this.state.fingerprintLock} onValueChange={async (newValue) => {
+                    let set = JSON.stringify({auth_enabled: newValue});
+                    await AsyncStorage.setItem('auth_enabled', set);
+                    console.log(set);
+                    this.setState({fingerprintLock: newValue});
+                }}></FormSwitch>
 
 
+
+{/* 
                 <Text style={styles.header}>2019</Text>
-                <Text style={styles.subtitle} value={this.state.name} onChangeText={(newText) => this.setState({name: newText})}>JAN</Text>
+                <Text style={styles.subtitle} value={this.state.name} onChangeText={(newText) => this.setState({name: newText})}>JAN</Text> */}
 
-                <ScrollView style={styles.heatMapScroll} horizontal={true} showsHorizontalScrollIndicator={false}>
+                {/* <ScrollView style={styles.heatMapScroll} horizontal={true} showsHorizontalScrollIndicator={false}>
                     <View style={styles.heatmap}>
                         <View style={styles.hmWeeks}>
                             {this.generateBlocks()}
@@ -138,18 +120,7 @@ class SettingsScreen extends React.Component {
                             {this.generateBlocks()}
                         </View>
                     </View>
-                </ScrollView>
-
-                <Calendar 
-                    onSelectDate={(year, month) => {
-                        this.setState({year: this.state.year + 1});
-                        this.setState({monthEntries: monthEntries2});
-                        console.log(year + '|' + month);
-                    }}
-                    year={this.state.year}
-                    monthEntries={this.state.monthEntries}
-                    >
-                </Calendar>
+                </ScrollView> */}
             </ScrollView>
         )
     }
