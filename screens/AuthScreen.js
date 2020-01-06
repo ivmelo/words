@@ -1,6 +1,6 @@
 import React from 'react';
 import {AsyncStorage, Text, StyleSheet, View, TouchableOpacity} from 'react-native';
-import {LocalAuthentication} from 'expo';
+import * as LocalAuthentication from 'expo-local-authentication';
 
 class HomeScreen extends React.Component {
     state = {
