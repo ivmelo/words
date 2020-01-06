@@ -7,17 +7,17 @@
     "eject": "expo eject"
   },
   "dependencies": {
-    "expo": "^34.0.0",
+    "expo": "^35.0.0",
     "lorem-ipsum-react-native": "^1.0.3",
     "react": "16.8.3",
-    "react-native": "https://github.com/expo/react-native/archive/sdk-34.0.2.tar.gz",
+    "react-native": "https://github.com/expo/react-native/archive/sdk-35.0.0.tar.gz",
     "react-native-sweet-record": "^1.0.0",
     "react-navigation": "^3.3.2",
-    "expo-local-authentication": "~6.0.0",
-    "expo-sqlite": "~6.0.0"
+    "expo-local-authentication": "~7.0.0",
+    "expo-sqlite": "~7.0.0"
   },
   "devDependencies": {
-    "babel-preset-expo": "^6.0.0"
+    "babel-preset-expo": "^7.0.0"
   },
   "private": true
 }
