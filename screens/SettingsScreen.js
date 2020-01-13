@@ -20,6 +20,9 @@ class SettingsScreen extends React.Component {
 
     async componentDidMount() {
         let needsAuth = await AsyncStorage.getItem('auth_enabled');
+        let naobj = JSON.parse(needsAuth);
+        this.setState({fingerprintLock: naobj.auth_enabled});
+        console.log();
         console.log(needsAuth);
         console.log(typeof needsAuth);
     }

@@ -1,4 +1,4 @@
-import {SQLite} from 'expo';
+import * as SQLite from 'expo-sqlite';
 
 class SimpleMigrations {
     /**

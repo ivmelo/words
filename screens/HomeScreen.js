@@ -1,5 +1,5 @@
 import React from 'react';
-import {ScrollView, Modal, Text, TouchableHighlight, StyleSheet, View, RefreshControl, TouchableOpacity, TouchableNativeFeedback, StatusBar, Vibration, Alert} from 'react-native';
+import {ScrollView, Modal, StyleSheet, View, RefreshControl, TouchableOpacity, TouchableNativeFeedback, StatusBar, Vibration, Alert} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import EntryPreview from '../components/EntryPreview';
 import Calendar from '../components/Calendar';
@@ -23,7 +23,7 @@ class HomeScreen extends React.Component {
         entries: [],
         refreshing: false,
         calendarModalVisible: false,
-        year: 2019,
+        year: new Date().getFullYear(),
         month: new Date().getMonth(),
         monthEntriesCount: [
             null, null, null, null, null, null,
@@ -98,7 +98,7 @@ class HomeScreen extends React.Component {
         // await Migrations.wipeDatabase();
         await Migrations.run();
 
-        // this.populateEntries(new Date(2010, 0, 1), 365 * 10, true);
+        // this.populateEntries(new Date(2018, 0, 1), 365 * 3, true);
 
         // await this.updateEntriesCountByMonth();
     }

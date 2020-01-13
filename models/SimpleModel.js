@@ -1,6 +1,4 @@
-import {
-    SQLite
-} from 'expo';
+import * as SQLite from 'expo-sqlite';
 
 import SimpleQuery from './SimpleQuery';
 
