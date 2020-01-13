@@ -1,5 +1,5 @@
 import React from 'react';
-import {ScrollView, Modal, Text, TouchableHighlight, StyleSheet, View, RefreshControl, TouchableOpacity, TouchableNativeFeedback, StatusBar, Vibration, Alert} from 'react-native';
+import {ScrollView, Modal, StyleSheet, View, RefreshControl, TouchableOpacity, TouchableNativeFeedback, StatusBar, Vibration, Alert} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import EntryPreview from '../components/EntryPreview';
 import Calendar from '../components/Calendar';
@@ -95,12 +95,12 @@ class HomeScreen extends React.Component {
             onPressCalendar: this.onPressCalendar,
         });
 
-        // await Migrations.wipeDatabase();
+        await Migrations.wipeDatabase();
         await Migrations.run();
 
-        // this.populateEntries(new Date(2010, 0, 1), 365 * 10, true);
+        this.populateEntries(new Date(2010, 0, 1), 365 * 10, true);
 
-        // await this.updateEntriesCountByMonth();
+        await this.updateEntriesCountByMonth();
     }
 
     onPressCalendar = () => {
