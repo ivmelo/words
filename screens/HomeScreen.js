@@ -23,7 +23,7 @@ class HomeScreen extends React.Component {
         entries: [],
         refreshing: false,
         calendarModalVisible: false,
-        year: 2019,
+        year: new Date().getFullYear(),
         month: new Date().getMonth(),
         monthEntriesCount: [
             null, null, null, null, null, null,
@@ -95,12 +95,12 @@ class HomeScreen extends React.Component {
             onPressCalendar: this.onPressCalendar,
         });
 
-        await Migrations.wipeDatabase();
+        // await Migrations.wipeDatabase();
         await Migrations.run();
 
-        this.populateEntries(new Date(2010, 0, 1), 365 * 10, true);
+        // this.populateEntries(new Date(2018, 0, 1), 365 * 3, true);
 
-        await this.updateEntriesCountByMonth();
+        // await this.updateEntriesCountByMonth();
     }
 
     onPressCalendar = () => {
