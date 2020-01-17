@@ -17,19 +17,16 @@ import Calendar from '../components/Calendar';
 import Entry from '../models/Entry';
 import Migrations from '../migrations/Migrations';
 
+// TODO: Properly import this.
 var loremIpsum = require('lorem-ipsum-react-native');
 
-function setYearMonth(year, month) {
-    return (previousState, currentProps) => {
-        return {
-            ...previousState,
-            year: year,
-            month: month
-        };
-    };
-}
-
+/**
+ * The home and "Main" screen of the app.
+ */
 class HomeScreen extends React.Component {
+    /**
+     * Holds the state of this screen.
+     */
     state = {
         entries: [],
         refreshing: false,
@@ -40,10 +37,13 @@ class HomeScreen extends React.Component {
             null, null, null, null, null, null,
             null, null, null, null, null, null
         ],
-        themeColor: '#2ecc71', // Same as in App.js.
+        themeColor: global.THEME_COLOR, // Same as in App.js.
         numberOfLines: 0,
     }
 
+    /**
+     * Defines the navigation options of this screen including header title, color, buttons, etc...
+     */
     static navigationOptions = ({navigation}) => {
         return {
             title: navigation.getParam('headerTitle', 'Words'),
@@ -139,6 +139,7 @@ class HomeScreen extends React.Component {
      * Called when settings menu button is pressed.
      */
     onPressSettings = () => {
+        this.setThemeColor(global.THEME_COLOR);
         this.props.navigation.navigate('SettingsScreen');
     }
 
@@ -146,6 +147,7 @@ class HomeScreen extends React.Component {
      * Called when floating add button is pressed.
      */
     onPressAdd = () => {
+        this.setThemeColor('#2ecc71');
         this.props.navigation.navigate('EntryScreen', {year: this.state.year, month: this.state.month});
     }
 
@@ -231,6 +233,7 @@ class HomeScreen extends React.Component {
         // Only update if date has changed.
         if (year !== this.year && month - 1 !== this.month) {
             this.setState({year: year, month: month - 1}, () => {
+                this.updateEntriesCountByMonth();
                 this.onRefresh();
             });
         }
@@ -383,6 +386,10 @@ class HomeScreen extends React.Component {
     }
 }
 
+/**
+ * Month names in english.
+ * TODO: Localize app.
+ */
 const monthNames = [
     'January', 'February', 'March',
     'April', 'May', 'June',
@@ -390,6 +397,9 @@ const monthNames = [
     'October', 'November', 'December'
 ];
 
+/**
+ * The stylesheet of this page.
+ */
 var styles = StyleSheet.create({
     mainView: {
         flex: 1,
@@ -410,7 +420,7 @@ var styles = StyleSheet.create({
         elevation: 1,
     },
 
-    /** MODALS */
+    /** Modals */
     outterModalView: {
         flex: 1,
         flexDirection: 'column',

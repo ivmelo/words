@@ -19,6 +19,8 @@ if (Platform.OS === 'android') {
     SafeAreaView.setStatusBarHeight(0);
 }
 
+global.THEME_COLOR = '#2ecc71';
+
 const AuthStack = createStackNavigator({
     AuthScreen: AuthScreen
 });
