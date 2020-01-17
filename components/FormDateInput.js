@@ -24,7 +24,7 @@ class FormDateInput extends Component {
      */
     getDisplayDate() {
         if (this.props.value && this.props.value != '') {
-            return new Date(this.props.value).toLocaleDateString();
+            return new Date(this.props.value).toLocaleDateString('en-US', {year: 'numeric'});
         }
         return '';
     }

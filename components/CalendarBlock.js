@@ -1,17 +1,17 @@
 import React from 'react';
-import {View, StyleSheet, Text, TouchableNativeFeedback} from 'react-native';
+import {View, StyleSheet, Text, TouchableOpacity} from 'react-native';
 
 class CalendarBlock extends React.Component {
     render() {
         return (
-            <TouchableNativeFeedback {...this.props}>
-                <View style={[styles.calendarBlock, {backgroundColor: this.props.bgColor}]}>
+            <TouchableOpacity {...this.props} style={[styles.calendarBlock, {backgroundColor: this.props.bgColor}]} activeOpacity={0.8}>
+                <View>
                     {this.props.total &&
                         <Text style={styles.calendarStats}><Text style={styles.calendarStatsLg}>{this.props.amount ? this.props.amount : '0'}</Text>/{this.props.total}</Text>
                     }
                     <Text style={styles.calendarLabel}>{this.props.title.toUpperCase()}</Text>
                 </View>
-            </TouchableNativeFeedback>
+            </TouchableOpacity>
         )
     }
 }

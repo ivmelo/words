@@ -1,14 +1,18 @@
 import React from 'react';
-import {View, StyleSheet, AsyncStorage, TouchableOpacity, ScrollView, TouchableNativeFeedback} from 'react-native';
+import {Button, View, StyleSheet, AsyncStorage, TouchableOpacity, ScrollView, TouchableNativeFeedback} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Calendar from '../components/Calendar';
 import FormInput from '../components/FormInput';
 import FormHeader from '../components/FormHeader';
 import FormSwitch from '../components/FormSwitch';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
+import Entry from '../models/Entry';
+import * as DocumentPicker from 'expo-document-picker';
 
 class SettingsScreen extends React.Component {
     state = {
-        name: 'Ivanilson',
+        name: '',
         fingerprintLock: false,
     };
 
@@ -22,9 +26,77 @@ class SettingsScreen extends React.Component {
         let needsAuth = await AsyncStorage.getItem('auth_enabled');
         let naobj = JSON.parse(needsAuth);
         this.setState({fingerprintLock: naobj.auth_enabled});
+
+        let displayFullEntries = await AsyncStorage.getItem('display_full_entries');
         console.log();
-        console.log(needsAuth);
-        console.log(typeof needsAuth);
+        console.log(displayFullEntries);
+        let dfeobj = JSON.parse(displayFullEntries);
+        this.setState({displayFullEntries: dfeobj.display_full_entries});
+        // console.log(typeof needsAuth);
+    }
+
+    async clearData() {
+        Entry.destroyAll().then(async (entries) => {
+            console.log('ok');
+        }).catch(err => {
+            console.log(err);
+        });
+    }
+
+    async restoreBackup() {
+        let resp = await DocumentPicker.getDocumentAsync();
+        let string = await FileSystem.readAsStringAsync(resp.uri);
+        let geiso = JSON.parse(string);
+
+        geiso.forEach(async (record) => {
+            // record.id = null;
+
+            // console.log(record);
+
+            // delete record.id;
+
+            // console.log(record);
+
+            let e = new Entry();
+            e.date = new Date(record.date);
+            e.created_at = new Date(record.created_at);
+            e.updated_at = new Date(record.updated_at);
+            e.entry = record.entry;
+            await e.save();
+
+            console.log(console.log(e));
+
+            // console.log(record.id);
+        });
+
+        // console.log(resp);
+        // console.log(geiso[0]);
+        // console.log(string);
+    }
+    
+
+    async downloadFile() {
+        let entries = Entry.all().then(async (entries) => {
+            let entries_json = JSON.stringify(entries);
+            console.log(entries_json);
+            // let enstr = JSON.stringify(entries);
+            // console.log(enstr);
+            let fileName ='words-' + Date.now() + '.json';
+            const fileUri = FileSystem.cacheDirectory + fileName;
+            await FileSystem.writeAsStringAsync(fileUri, entries_json, { encoding: FileSystem.EncodingType.UTF8 });
+            await Sharing.shareAsync(FileSystem.cacheDirectory + fileName);
+        }).catch((err) => {
+            console.log('error');
+        });
+
+        console.log(entries);
+
+
+
+        // const fileUri = FileSystem.cacheDirectory + 'demo.txt';
+        // await FileSystem.writeAsStringAsync(fileUri, "Hello World", { encoding: FileSystem.EncodingType.UTF8 });
+        // await Sharing.shareAsync(FileSystem.cacheDirectory + 'demo.txt');
+        console.log('oks');
     }
 
     daysInMonth (month, year) {
@@ -81,6 +153,40 @@ class SettingsScreen extends React.Component {
                     console.log(set);
                     this.setState({fingerprintLock: newValue});
                 }}></FormSwitch>
+
+                <FormSwitch description="Display full entries" thumbColor="#2ecc71" value={this.state.displayFullEntries} onValueChange={async (newValue) => {
+                    let set = JSON.stringify({display_full_entries: newValue});
+                    await AsyncStorage.setItem('display_full_entries', set);
+                    console.log(set);
+                    this.setState({displayFullEntries: newValue});
+                }}></FormSwitch>
+                
+                <Button
+                    title="Backup Data"
+                    color="#f194ff"
+                    onPress={() => {
+                        this.downloadFile();
+                        console.log('hesy');
+                    }}
+                />
+
+                <Button
+                    title="Restore Backup"
+                    color="#4fff19"
+                    onPress={() => {
+                        this.restoreBackup();
+                        console.log('restoring');
+                    }}
+                />
+
+                <Button
+                    title="Clear Data"
+                    color="#fff419"
+                    onPress={() => {
+                        this.clearData();
+                        console.log('clear');
+                    }}
+                />
 
 
 

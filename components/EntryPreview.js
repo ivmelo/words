@@ -27,7 +27,7 @@ class EntryPreview extends React.Component {
                         <Text style={styles.entryMonth}>{this.getMonthName(this.props.month)}</Text>
                     </View>
                     <View style={styles.entryBoxSummary}>
-                        <Text style={styles.entryBoxSummaryText} numberOfLines={3}>{this.props.text}</Text>
+                        <Text style={styles.entryBoxSummaryText} numberOfLines={this.props.numberOfLines}>{this.props.text}</Text>
                     </View>
                 </View>
             </TouchableNativeFeedback>

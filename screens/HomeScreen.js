@@ -1,5 +1,16 @@
 import React from 'react';
-import {ScrollView, Modal, StyleSheet, View, RefreshControl, TouchableOpacity, TouchableNativeFeedback, StatusBar, Vibration, Alert} from 'react-native';
+import {
+    ScrollView, 
+    Modal, 
+    StyleSheet, 
+    View, 
+    RefreshControl, 
+    TouchableOpacity, 
+    TouchableNativeFeedback, 
+    StatusBar, 
+    Vibration, 
+    Alert
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import EntryPreview from '../components/EntryPreview';
 import Calendar from '../components/Calendar';
@@ -23,14 +34,14 @@ class HomeScreen extends React.Component {
         entries: [],
         refreshing: false,
         calendarModalVisible: false,
-        year: new Date().getFullYear(),
+        year: new Date().getFullYear(), // Starts at current year and month.
         month: new Date().getMonth(),
         monthEntriesCount: [
             null, null, null, null, null, null,
             null, null, null, null, null, null
         ],
-        themeColor: '#2ecc71',
-        headerTitle: 'What?'
+        themeColor: '#2ecc71', // Same as in App.js.
+        numberOfLines: 0,
     }
 
     static navigationOptions = ({navigation}) => {
@@ -63,7 +74,13 @@ class HomeScreen extends React.Component {
         }
     );
 
-
+    /**
+     * Used to generate fake entries for testing with "lorem ipsum".
+     * 
+     * @param {Date} start The start
+     * @param {int} days The number of days
+     * @param {boolean} ovewrite If current entries should be overwritten.
+     */
     async populateEntries(start = new Date(), days = 10, ovewrite = true) {
         if (ovewrite) {
             await Entry.destroyAll();
@@ -88,6 +105,9 @@ class HomeScreen extends React.Component {
         }
     }
 
+    /**
+     * RN LifeCycle. Called when component is mounted.
+     */
     async componentDidMount() {
         this.props.navigation.setParams({
             onPressAdd: this.onPressAdd,
@@ -95,36 +115,59 @@ class HomeScreen extends React.Component {
             onPressCalendar: this.onPressCalendar,
         });
 
+        // Completely destroys database and recreates it.
         // await Migrations.wipeDatabase();
+
+        // Run the SQLite migrations.
         await Migrations.run();
 
-        // this.populateEntries(new Date(2018, 0, 1), 365 * 3, true);
+        // Create fake entries for testing.
+        // this.populateEntries(new Date(2018, 0, 1), 365 * 2 + 10, true);
 
+        // Update the entries counter in the calendar component.
         // await this.updateEntriesCountByMonth();
     }
 
+    /**
+     * Called when calendar menu button is pressed.
+     */
     onPressCalendar = () => {
         this.setCalendarModalVisible(true);
     }
 
-    onPressAdd = () => {
-        this.props.navigation.navigate('EntryScreen', {year: this.state.year, month: this.state.month});
-    }
-
+    /**
+     * Called when settings menu button is pressed.
+     */
     onPressSettings = () => {
         this.props.navigation.navigate('SettingsScreen');
     }
 
+    /**
+     * Called when floating add button is pressed.
+     */
+    onPressAdd = () => {
+        this.props.navigation.navigate('EntryScreen', {year: this.state.year, month: this.state.month});
+    }
+
+    /**
+     * Sets hex color for to be used for theme (ex. #fafafa).
+     * 
+     * @param {string} color The theme color
+     */
     setThemeColor(color) {
         this.setState({themeColor: color});
         this.props.navigation.setParams({themeColor: color});
-        // this.props.navigation.setParams({headerTitle: 'Hooray!'});
     }
 
+    /**
+     * Called when an entry from the list is pressed and held.
+     * 
+     * @param {int} entryId The entry ID of the pressed element.
+     */
     onHoldEntry(entryId) {
         Vibration.vibrate(4);
 
-        // Works on both iOS and Android
+        // Displays alert to confirm the deletion of the entry.
         Alert.alert(
             'Delete entry',
             'Are you sure you want to delete the selected entry?',
@@ -144,10 +187,20 @@ class HomeScreen extends React.Component {
         );
     }
 
+    /**
+     * Called when an entry is pressed.
+     * 
+     * @param {int} entryId The entry ID of the pressed entry.
+     */
     onPressEntry(entryId) {
         this.props.navigation.navigate('EntryScreen', {entryId});
     }
 
+    /**
+     * Deletes the entry with the passed id.
+     * 
+     * @param {int} entryId The entry id of the entry to be deleted.
+     */
     deleteEntry(entryId) {
         Entry.find(entryId).then(async (entry) => {
             await entry.destroy();
@@ -155,6 +208,13 @@ class HomeScreen extends React.Component {
         }).catch(error => console.log(error));
     }
 
+    /**
+     * Called when a month is selected in the month picker (a.k.a. calendar).
+     * 
+     * @param {int} year The selected year.
+     * @param {int} month The selected month.
+     * @param {string} color The color of the selected month.
+     */
     dateSelected(year, month, color) {
         Vibration.vibrate(4);
 
@@ -163,10 +223,9 @@ class HomeScreen extends React.Component {
             yearChanged = true;
         }
 
-        this.props.navigation.setParams({
-            headerTitle: monthNames[month - 1] + ' ' + year,
-        });
+        this.updateTitle(monthNames[month - 1] + ' ' + year);
 
+        // Updates theme color when a month is selected.
         // this.setThemeColor(color);
 
         // Only update if date has changed.
@@ -181,11 +240,22 @@ class HomeScreen extends React.Component {
         }
     }
 
-    async updateEntriesCountByMonth() {
-        
-        let entryCount = [];
+    /**
+     * Updates the page title. Default: App Name. Usually: Current selected month.
+     * 
+     * @param {string} title The string to be set as title of this page. 
+     */
+    updateTitle(title) {
+        this.props.navigation.setParams({
+            headerTitle: title,
+        });
+    }
 
-        // this.setState({refreshing: true});
+    /**
+     * Updates the entries by month count in the year/month selector (calendar).
+     */
+    async updateEntriesCountByMonth() {        
+        let entryCount = [];
 
         // Set to and from dates.
         let fromYear = this.state.year;
@@ -211,8 +281,12 @@ class HomeScreen extends React.Component {
         this.setState({monthEntriesCount: entryCount});
     }
 
+    /**
+     * Called when the user requests a refresh or when the app is first opened.
+     */
     onRefresh() {
         this.setState({refreshing: true});
+        this.updateTitle(monthNames[this.state.month] + ' ' + this.state.year);
 
         // Set to and from dates.
         let fromYear = this.state.year;
@@ -237,11 +311,19 @@ class HomeScreen extends React.Component {
         .catch(err => console.log(err));
     }
     
+    /**
+     * Sets the visibility of the calendar (month/year picker).
+     * 
+     * @param {boolean} visible If the modal should be visible.
+     */
     setCalendarModalVisible(visible) {
         this.updateEntriesCountByMonth();
         this.setState({calendarModalVisible: visible});
     }
 
+    /**
+     * React Native Render function.
+     */
     render() {
         return (
             <View style={styles.mainView}>
@@ -291,7 +373,8 @@ class HomeScreen extends React.Component {
                             day={new Date(entry.date).getDate().toString()}
                             month={new Date(entry.date).getMonth()}
                             onLongPress={() => this.onHoldEntry(entry.id)}
-                            onPress={() => this.onPressEntry(entry.id)}>
+                            onPress={() => this.onPressEntry(entry.id)}
+                            numberOfLines={this.state.numberOfLines}>
                         </EntryPreview>
                     )}
                 </ScrollView>

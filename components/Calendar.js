@@ -5,7 +5,7 @@ import CalendarBlock from './CalendarBlock';
 
 class Calendar extends React.Component {
     generateYear() {
-        let year = 2019;
+        let year = new Date().getFullYear();
 
         let currentMonth = 0;
         let currentDay = 0;

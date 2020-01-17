@@ -8,23 +8,23 @@ class HomeScreen extends React.Component {
     }
 
     async componentDidMount() {
-        let needsAuth = false;
+        let needsAuth = true;
         
-        try {
-            let set = await AsyncStorage.getItem('auth_enabled');
+        // try {
+        //     let set = await AsyncStorage.getItem('auth_enabled');
             
-            console.log(set);
+        //     console.log(set);
 
-            if (set) {
-                let set = JSON.parse(set);
-                if (set.auth_enabled) {
-                    needsAuth = true;
-                }
-            }
+        //     if (set) {
+        //         let set = JSON.parse(set);
+        //         if (set.auth_enabled) {
+        //             needsAuth = true;
+        //         }
+        //     }
 
-        } catch (error) {
-            console.log(error);
-        }
+        // } catch (error) {
+        //     console.log(error);
+        // }
 
         this.authenticate(! needsAuth);
     }
