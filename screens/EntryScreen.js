@@ -6,7 +6,7 @@ import {
     TouchableOpacity, 
     ScrollView
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, AntDesign, Feather } from '@expo/vector-icons';
 import FormInput from '../components/FormInput';
 import FormDateInput from '../components/FormDateInput';
 import Entry from '../models/Entry';
@@ -29,13 +29,20 @@ class EntryScreen extends React.Component {
      */
     static navigationOptions = ({navigation}) => {
         return {
-            title: navigation.getParam('entryId', false) ? 'Edit Entry' : '',
+            title: navigation.getParam('headerTitle', ''),
             headerRight: (
-                <TouchableOpacity onPress={navigation.getParam('onPressSave')}>
-                    <View style={{marginRight: 10, width: 40, height: 40, flex: 1, alignItems: 'center', justifyContent: 'center'}}>
-                        <Ionicons name="md-checkmark" size={25} style={{color: '#fff'}}/>
-                    </View>
-                </TouchableOpacity>
+                <View style={{display: 'flex', flexDirection: 'row'}}>
+                    <TouchableOpacity onPress={navigation.getParam('onPressEdit')} style={[styles.rightMenuIcon, styles.marginRight5]}>
+                        <AntDesign name="calendar" size={25} style={{color: '#fff'}}/>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={navigation.getParam('onPressEdit')} style={[styles.rightMenuIcon, styles.marginRight5]}>
+                        <AntDesign name="edit" size={25} style={{color: '#fff'}}/>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={navigation.getParam('onPressSave')} style={styles.rightMenuIcon}>
+                        <AntDesign name="check" size={25} style={{color: '#fff'}}/>
+                    </TouchableOpacity>
+                </View>
+                
             )
         }
     };
@@ -46,6 +53,7 @@ class EntryScreen extends React.Component {
     async componentDidMount() {
         this.props.navigation.setParams({
             onPressSave: this.onPressSave,
+            onPressEdit: this.onPressEdit,
         });
 
         // Gets entry id from the navigation bar.
@@ -53,7 +61,8 @@ class EntryScreen extends React.Component {
 
         if (entryId) {
             let entry = await Entry.find(entryId);
-            this.setState({entry});
+            this.updateTitle(entry.date.toLocaleDateString());
+            this.setState({entry, isEditing: false});
         } else {
             let year = this.props.navigation.getParam('year', false);
             let month = this.props.navigation.getParam('month', false);
@@ -65,8 +74,20 @@ class EntryScreen extends React.Component {
             } else {
                 entry.date = new Date();
             }
-            this.setState({entry});
+            this.updateTitle(entry.date.toLocaleDateString());
+            this.setState({entry, isEditing: true});
         }
+    }
+
+    /**
+     * Updates the page title. Default: App Name. Usually: Current selected month.
+     * 
+     * @param {string} title The string to be set as title of this page. 
+     */
+    updateTitle(title) {
+        this.props.navigation.setParams({
+            headerTitle: title,
+        });
     }
 
     /**
@@ -74,6 +95,13 @@ class EntryScreen extends React.Component {
      */
     onPressSave = () => {
         this.saveEntry();
+    }
+
+    /**
+     * Lets user edit the current entry.
+     */
+    onPressEdit = () => {
+        this.setState({isEditing: ! this.state.isEditing});
     }
 
     /**
@@ -108,8 +136,9 @@ class EntryScreen extends React.Component {
         return (
             <ScrollView style={styles.mainView}>
                 <FormInput 
-                    value={this.state.entry.entry} 
+                    value={this.state.entry.entry}
                     multiline={true}
+                    style={{backgroundColor: '#afafaf'}}
                     numberOfLines={10}
                     editable={this.state.isEditing}
                     textInputStyle={styles.textInputStyle}
@@ -121,14 +150,14 @@ class EntryScreen extends React.Component {
                         }
                     }))}
                 ></FormInput>
-                <FormDateInput label="Date" value={this.state.entry.date.getTime()}
+                {/* <FormDateInput label="Date" value={this.state.entry.date.getTime()}
                     onChangeDate={(date) => this.setState(prevState => ({
                         entry: {
                             ...prevState.entry,
                             date: new Date(date)
                         }
                     }))}
-                ></FormDateInput>
+                ></FormDateInput> */}
             </ScrollView>
         )
     }
@@ -143,7 +172,14 @@ var styles = StyleSheet.create({
         backgroundColor: '#f9f9f9',
     },
     textInputStyle: {
-        textAlignVertical: 'top'
+        textAlignVertical: 'top',
+        textAlign: 'left'
+    },
+    rightMenuIcon: {
+        marginRight: 10, width: 40, height: 40, flex: 1, alignItems: 'center', justifyContent: 'center'
+    },
+    marginRight5: {
+        marginRight: 5
     }
 });
 

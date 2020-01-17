@@ -14,7 +14,6 @@ import SettingsScreen from './screens/SettingsScreen';
 import AuthScreen from './screens/AuthScreen';
 import AuthLoadingScreen from './screens/AuthLoadingScreen';
 
-
 if (Platform.OS === 'android') {
     SafeAreaView.setStatusBarHeight(0);
 }

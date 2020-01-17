@@ -1,6 +1,6 @@
 import React from 'react';
 import {View, StyleSheet, Text, TouchableOpacity, ScrollView, TouchableNativeFeedback} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { AntDesign } from '@expo/vector-icons';
 import CalendarBlock from './CalendarBlock';
 
 class Calendar extends React.Component {
@@ -39,7 +39,7 @@ class Calendar extends React.Component {
                 <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
                     <TouchableOpacity onPress={() => this.props.onSelectDate(this.props.year - 1, this.props.month + 1, colors[0])} disabled={this.props.year === 2010}>
                         <View style={{paddingVertical: 15, paddingHorizontal: 20}}>
-                            <Ionicons name="md-arrow-back" size={30} style={{color: this.props.year === 2010 ? '#888' : '#111'}}/>
+                            <AntDesign name="left" size={30} style={{color: this.props.year === 2010 ? '#888' : '#111'}}/>
                         </View>
                     </TouchableOpacity>
 
@@ -47,7 +47,7 @@ class Calendar extends React.Component {
 
                     <TouchableOpacity onPress={() => this.props.onSelectDate(this.props.year + 1, this.props.month + 1, colors[0])} disabled={this.props.year === new Date().getFullYear()}>
                         <View style={{paddingVertical: 15, paddingHorizontal: 20}}>
-                            <Ionicons name="md-arrow-forward" size={30} style={{color: this.props.year === new Date().getFullYear() ? '#888' : '#111'}}/>
+                            <AntDesign name="right" size={30} style={{color: this.props.year === new Date().getFullYear() ? '#888' : '#111'}}/>
                         </View>
                     </TouchableOpacity>
                 </View>

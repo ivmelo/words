@@ -11,7 +11,7 @@ import {
     Vibration, 
     Alert
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { AntDesign, Ionicons } from '@expo/vector-icons';
 import EntryPreview from '../components/EntryPreview';
 import Calendar from '../components/Calendar';
 import Entry from '../models/Entry';
@@ -38,7 +38,7 @@ class HomeScreen extends React.Component {
             null, null, null, null, null, null
         ],
         themeColor: global.THEME_COLOR, // Same as in App.js.
-        numberOfLines: 0,
+        numberOfLines: 5,
     }
 
     /**
@@ -53,14 +53,14 @@ class HomeScreen extends React.Component {
             headerLeft: (
                 <TouchableOpacity onPress={navigation.getParam('onPressSettings')}>
                     <View style={{marginLeft: 10, width: 40, height: 40, flex: 1, alignItems: 'center', justifyContent: 'center'}}>
-                        <Ionicons name="md-settings" size={25} style={{color: '#fff'}}/>
+                        <AntDesign name="setting" size={25} style={{color: '#fff'}}/>
                     </View>
                 </TouchableOpacity>
             ),
             headerRight: (
                 <TouchableOpacity onPress={navigation.getParam('onPressCalendar')}>
                     <View style={{marginRight: 10, width: 40, height: 40, flex: 1, alignItems: 'center', justifyContent: 'center'}}>
-                        <Ionicons name="md-calendar" size={25} style={{color: '#fff'}}/>
+                        <AntDesign name="calendar" size={25} style={{color: '#fff'}}/>
                     </View>
                 </TouchableOpacity>
             )
@@ -106,7 +106,7 @@ class HomeScreen extends React.Component {
     }
 
     /**
-     * RN LifeCycle. Called when component is mounted.
+     * React Native LifeCycle. Called when component is mounted.
      */
     async componentDidMount() {
         this.props.navigation.setParams({
@@ -333,7 +333,7 @@ class HomeScreen extends React.Component {
                 <StatusBar backgroundColor={this.state.themeColor} barStyle="light-content" />
 
                 <TouchableNativeFeedback onLongPress={() => {
-                    this.setThemeColor('#5B3256');
+                    this.setThemeColor('#000');
                 }} onPress={() => this.onPressAdd()} useForeground={true}  background={TouchableNativeFeedback.Ripple('#aaa', true)}>
                     <View style={[styles.floatingButton, {backgroundColor: this.state.themeColor}]}>
                         <Ionicons name="md-add" size={30} style={{color: '#fff'}}/>

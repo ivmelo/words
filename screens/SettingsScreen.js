@@ -145,6 +145,8 @@ class SettingsScreen extends React.Component {
                 <FormInput label="Pin"></FormInput>
                 <FormInput label="Encryption"></FormInput>
 
+                <FormInput label="Preview Lines" keyboardType="number-pad"></FormInput>
+
                 <FormInput label="Fingerprints"></FormInput>
 
                 <FormSwitch description="Fingerprint lock" thumbColor="#2ecc71" value={this.state.fingerprintLock} onValueChange={async (newValue) => {
@@ -187,6 +189,7 @@ class SettingsScreen extends React.Component {
                         console.log('clear');
                     }}
                 />
+                
 
 
 
