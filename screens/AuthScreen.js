@@ -192,7 +192,7 @@ class HomeScreen extends React.Component {
 var styles = StyleSheet.create({
     mainView: {
         flex: 1,
-        // backgroundColor: '#2ecc71',
+        // backgroundColor: global.THEME_COLOR,
         flexDirection: 'column',
         backgroundColor: global.THEME_COLOR,
         justifyContent: 'space-between',

@@ -1,5 +1,14 @@
 import React, { Component } from 'react';
-import {StyleSheet, Text, View, TextInput, ScrollView, Modal, TouchableNativeFeedback, TouchableHighlight} from 'react-native';
+import {
+    StyleSheet, 
+    Text, 
+    View, 
+    TextInput, 
+    ScrollView, 
+    Modal, 
+    TouchableNativeFeedback, 
+    TouchableHighlight
+} from 'react-native';
 import PropTypes from 'prop-types';
 import FormHeader from './FormHeader';
 
@@ -42,7 +51,7 @@ class FormSelect extends Component {
         return (
             <View>
                 <Modal
-                    animationType="slide"
+                    animationType="fade"
                     transparent={true}
                     visible={this.state.modalVisible}
                     onRequestClose={() => {

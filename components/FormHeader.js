@@ -1,10 +1,14 @@
 import React, { Component } from 'react';
-import {StyleSheet, Text, View} from 'react-native';
+import {
+    StyleSheet, 
+    Text, 
+    View
+} from 'react-native';
 import PropTypes from 'prop-types';
 
 class FormHeader extends Component {
     /**
-     * The classic render function.
+     * React Native Render function.
      */
     render() {
         return (
@@ -18,11 +22,17 @@ class FormHeader extends Component {
     }
 }
 
+/**
+ * Prop types for validation.
+ */
 FormHeader.propTypes = {
     title: PropTypes.string.isRequired,
     subtitle: PropTypes.string,
 };
 
+/**
+ * The stylesheet of this page.
+ */
 const styles = StyleSheet.create({
     headerBox: {
         paddingHorizontal: 15,

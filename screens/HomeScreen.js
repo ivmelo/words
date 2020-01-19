@@ -48,7 +48,7 @@ class HomeScreen extends React.Component {
         return {
             title: navigation.getParam('headerTitle', 'Words'),
             headerStyle: {
-                backgroundColor: navigation.getParam('themeColor', '#2ecc71'),
+                backgroundColor: navigation.getParam('themeColor', global.THEME_COLOR),
             },
             headerLeft: (
                 <TouchableOpacity onPress={navigation.getParam('onPressSettings')}>
@@ -147,7 +147,7 @@ class HomeScreen extends React.Component {
      * Called when floating add button is pressed.
      */
     onPressAdd = () => {
-        this.setThemeColor('#2ecc71');
+        this.setThemeColor(global.THEME_COLOR);
         this.props.navigation.navigate('EntryScreen', {year: this.state.year, month: this.state.month});
     }
 
@@ -194,8 +194,11 @@ class HomeScreen extends React.Component {
      * 
      * @param {int} entryId The entry ID of the pressed entry.
      */
-    onPressEntry(entryId) {
-        this.props.navigation.navigate('EntryScreen', {entryId});
+    onPressEntry(entry) {
+        this.props.navigation.navigate('EntryScreen', {
+            entryId: entry.id,
+            entryDate: entry.date
+        });
     }
 
     /**
@@ -336,7 +339,7 @@ class HomeScreen extends React.Component {
                     this.setThemeColor('#000');
                 }} onPress={() => this.onPressAdd()} useForeground={true}  background={TouchableNativeFeedback.Ripple('#aaa', true)}>
                     <View style={[styles.floatingButton, {backgroundColor: this.state.themeColor}]}>
-                        <Ionicons name="md-add" size={30} style={{color: '#fff'}}/>
+                        <Ionicons name="ios-add" size={35} style={{color: '#fff'}}/>
                     </View>
                 </TouchableNativeFeedback>
 
@@ -376,7 +379,7 @@ class HomeScreen extends React.Component {
                             day={new Date(entry.date).getDate().toString()}
                             month={new Date(entry.date).getMonth()}
                             onLongPress={() => this.onHoldEntry(entry.id)}
-                            onPress={() => this.onPressEntry(entry.id)}
+                            onPress={() => this.onPressEntry(entry)}
                             numberOfLines={this.state.numberOfLines}>
                         </EntryPreview>
                     )}
@@ -413,7 +416,7 @@ var styles = StyleSheet.create({
         width: 50,
         height: 50,
         borderRadius: 50,
-        backgroundColor: '#2ecc71',
+        backgroundColor: global.THEME_COLOR,
         position: 'absolute',
         bottom: 20,                                                   
         right: 20,

@@ -5,6 +5,7 @@ import Calendar from '../components/Calendar';
 import FormInput from '../components/FormInput';
 import FormHeader from '../components/FormHeader';
 import FormSwitch from '../components/FormSwitch';
+import FormSelect from '../components/FormSelect';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import Entry from '../models/Entry';
@@ -14,6 +15,25 @@ class SettingsScreen extends React.Component {
     state = {
         name: '',
         fingerprintLock: false,
+        selectedItem: 1,
+        selectItems: [
+            {
+                label: 'Display Full Entry',
+                value: 1
+            },
+            {
+                label: '3 Lines',
+                value: 2
+            },
+            {
+                label: '5 Lines',
+                value: 3
+            },
+            {
+                label: '10 Lines',
+                value: 3
+            }
+        ]
     };
 
     static navigationOptions = ({navigation}) => {
@@ -148,6 +168,8 @@ class SettingsScreen extends React.Component {
                 <FormInput label="Preview Lines" keyboardType="number-pad"></FormInput>
 
                 <FormInput label="Fingerprints"></FormInput>
+
+                <FormSelect label="demo" items={this.state.selectItems} value={this.state.selectedItem} onChangeValue={(v) => this.setState({selectedItem: v})}></FormSelect>
 
                 <FormSwitch description="Fingerprint lock" thumbColor="#2ecc71" value={this.state.fingerprintLock} onValueChange={async (newValue) => {
                     let set = JSON.stringify({auth_enabled: newValue});
@@ -333,7 +355,7 @@ var styles = StyleSheet.create({
         marginRight: 15,
     },
     hmBlock: {
-        backgroundColor: '#2ecc71',
+        backgroundColor: global.THEME_COLOR,
         height: 20,
         width: 20,
         marginBottom: 3,

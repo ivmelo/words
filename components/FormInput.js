@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 
 class FormHeader extends Component {
     /**
-     * The classic render function.
+     * React Native Render function.
      */
     render() {
         return (
@@ -18,11 +18,17 @@ class FormHeader extends Component {
     }
 }
 
+/**
+ * Prop types for validation.
+ */
 FormHeader.propTypes = {
     label: PropTypes.string,
     placeholder: PropTypes.string,
 };
 
+/**
+ * The stylesheet of this page.
+ */
 const styles = StyleSheet.create({
     textInputBox: {
         paddingHorizontal: 15,

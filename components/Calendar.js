@@ -1,38 +1,17 @@
 import React from 'react';
-import {View, StyleSheet, Text, TouchableOpacity, ScrollView, TouchableNativeFeedback} from 'react-native';
-import { AntDesign } from '@expo/vector-icons';
+import {
+    View, 
+    StyleSheet, 
+    Text, 
+    TouchableOpacity
+} from 'react-native';
+import {AntDesign} from '@expo/vector-icons';
 import CalendarBlock from './CalendarBlock';
 
 class Calendar extends React.Component {
-    generateYear() {
-        let year = new Date().getFullYear();
-
-        let currentMonth = 0;
-        let currentDay = 0;
-        let currentDate = 0;
-        
-    }
-
-    generateBlocks() {
-        return (
-            <View style={styles.hmColumn}>
-                {this.generateBlock()}
-                {this.generateBlock()}
-                {this.generateBlock()}
-                {this.generateBlock()}
-                {this.generateBlock()}
-                {this.generateBlock()}
-                {this.generateBlock()}
-            </View>
-        );
-    }
-
-    generateBlock() {
-        return (
-            <View style={styles.hmBlock}></View>
-        );
-    }
-
+    /**
+     * React Native Render function.
+     */
     render() {
         return (
             <View>
@@ -80,6 +59,9 @@ class Calendar extends React.Component {
     }
 }
 
+/**
+ * The background colours of the month buttons.
+ */
 var colors = [
     '#007cbc',
     '#0099d2',
@@ -96,6 +78,9 @@ var colors = [
     '#cccccc'
 ];
 
+/**
+ * The stylesheet of this page.
+ */
 var styles = StyleSheet.create({
     header: {
         padding: 15,
