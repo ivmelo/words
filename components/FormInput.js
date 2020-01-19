@@ -1,8 +1,14 @@
 import React, { Component } from 'react';
-import {StyleSheet, Text, View, TextInput} from 'react-native';
+import {
+    StyleSheet, 
+    Text, 
+    View, 
+    TextInput,
+    Button
+} from 'react-native';
 import PropTypes from 'prop-types';
 
-class FormHeader extends Component {
+class FormInput extends Component {
     /**
      * React Native Render function.
      */
@@ -21,7 +27,7 @@ class FormHeader extends Component {
 /**
  * Prop types for validation.
  */
-FormHeader.propTypes = {
+FormInput.propTypes = {
     label: PropTypes.string,
     placeholder: PropTypes.string,
 };
@@ -48,5 +54,5 @@ const styles = StyleSheet.create({
     }
 });
 
-export default FormHeader;
+export default FormInput;
 

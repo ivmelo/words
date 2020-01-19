@@ -3,7 +3,7 @@ import {
     StyleSheet, 
     Text, 
     View, 
-    TouchableNativeFeedback
+    TouchableOpacity,
 } from 'react-native';
 
 class EntryPreview extends React.Component {
@@ -43,7 +43,7 @@ class EntryPreview extends React.Component {
      */
     render() {
         return (
-            <TouchableNativeFeedback {...this.props}>
+            <TouchableOpacity {...this.props} activeOpacity={0.5}>
                 <View style={styles.entryBox}>
                     <View style={styles.entryBoxInner}>
                         <Text style={styles.entryDay}>{this.getDay(this.props.day)}</Text>
@@ -53,7 +53,7 @@ class EntryPreview extends React.Component {
                         <Text style={styles.entryBoxSummaryText} numberOfLines={this.props.numberOfLines}>{this.props.text}</Text>
                     </View>
                 </View>
-            </TouchableNativeFeedback>
+            </TouchableOpacity>
         )
     }
 }

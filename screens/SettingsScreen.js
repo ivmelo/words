@@ -1,36 +1,37 @@
 import React from 'react';
-import {Button, View, StyleSheet, AsyncStorage, TouchableOpacity, ScrollView, TouchableNativeFeedback} from 'react-native';
+import {
+    StyleSheet, 
+    AsyncStorage, 
+    ScrollView, 
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import Calendar from '../components/Calendar';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
+import * as DocumentPicker from 'expo-document-picker';
+import Entry from '../models/Entry';
 import FormInput from '../components/FormInput';
 import FormHeader from '../components/FormHeader';
 import FormSwitch from '../components/FormSwitch';
 import FormSelect from '../components/FormSelect';
-import * as FileSystem from 'expo-file-system';
-import * as Sharing from 'expo-sharing';
-import Entry from '../models/Entry';
-import * as DocumentPicker from 'expo-document-picker';
+import FormButton from '../components/FormButton';
 
 class SettingsScreen extends React.Component {
     state = {
         name: '',
         fingerprintLock: false,
         selectedItem: 1,
+        restoreBackupLabel: 'Restore backup',
         selectItems: [
             {
-                label: 'Display Full Entry',
+                label: '#007cbc',
                 value: 1
             },
             {
-                label: '3 Lines',
+                label: '#0099d2',
                 value: 2
             },
             {
-                label: '5 Lines',
-                value: 3
-            },
-            {
-                label: '10 Lines',
+                label: '#009d50',
                 value: 3
             }
         ]
@@ -52,7 +53,10 @@ class SettingsScreen extends React.Component {
         console.log(displayFullEntries);
         let dfeobj = JSON.parse(displayFullEntries);
         this.setState({displayFullEntries: dfeobj.display_full_entries});
-        // console.log(typeof needsAuth);
+    }
+
+    async componentWillUnmount() {
+        console.log('unmounting...');
     }
 
     async clearData() {
@@ -66,32 +70,42 @@ class SettingsScreen extends React.Component {
     async restoreBackup() {
         let resp = await DocumentPicker.getDocumentAsync();
         let string = await FileSystem.readAsStringAsync(resp.uri);
-        let geiso = JSON.parse(string);
+        let entrySet = JSON.parse(string);
 
-        geiso.forEach(async (record) => {
-            // record.id = null;
+        let totalEntries = entrySet.length;
 
-            // console.log(record);
+        for(let i = 0; i < totalEntries; i++) {
+            let record = entrySet[i];
+            let entry = new Entry();
+            entry.date = new Date(record.date);
+            entry.created_at = new Date(record.created_at);
+            entry.updated_at = new Date(record.updated_at);
+            entry.entry = record.entry;
 
-            // delete record.id;
+            await entry.save();
 
-            // console.log(record);
+            this.setState({
+                restoreBackupLabel: 'Importing entries... [' + i + '/' + totalEntries + ']'
+            });
+            console.log(i);
+        }
 
-            let e = new Entry();
-            e.date = new Date(record.date);
-            e.created_at = new Date(record.created_at);
-            e.updated_at = new Date(record.updated_at);
-            e.entry = record.entry;
-            await e.save();
-
-            console.log(console.log(e));
-
-            // console.log(record.id);
+        this.setState({
+            restoreBackupLabel: 'Restore backup'
         });
+        
 
-        // console.log(resp);
-        // console.log(geiso[0]);
-        // console.log(string);
+        // geiso.forEach(async (record) => {
+        //     // Creates new entry object.
+        //     let e = new Entry();
+        //     e.date = new Date(record.date);
+        //     e.created_at = new Date(record.created_at);
+        //     e.updated_at = new Date(record.updated_at);
+        //     e.entry = record.entry;
+
+        //     // Saves async while waiting.
+        //     await e.save();
+        // });
     }
     
 
@@ -119,57 +133,28 @@ class SettingsScreen extends React.Component {
         console.log('oks');
     }
 
-    daysInMonth (month, year) {
-        return new Date(year, month, 0).getDate();
-    }
-
-    generateYear() {
-        let year = 2019;
-
-        let currentMonth = 0;
-        let currentDay = 0;
-        let currentDate = 0;
-        
-    }
-
-    generateBlocks() {
-        return (
-            <View style={styles.hmColumn}>
-                {this.generateBlock()}
-                {this.generateBlock()}
-                {this.generateBlock()}
-                {this.generateBlock()}
-                {this.generateBlock()}
-                {this.generateBlock()}
-                {this.generateBlock()}
-            </View>
-        );
-    }
-
-    generateBlock() {
-        return (
-            <View style={styles.hmBlock}></View>
-        );
-    }
-
     render() {
         return (
             <ScrollView>
                 {/* <Text style={styles.header}>Hey {this.state.name}.</Text>
                 <Text style={styles.subtitle}>You can use the fields below to customise this app to better suit your needs.</Text> */}
 
-                <FormHeader title="Preference's" subtitle="You can use the fields below to customize the app appearance, settings and etc..."></FormHeader>
+                <FormHeader title="General"></FormHeader>
+                <FormButton
+                    label="About Words"
+                    onPress={() => {
+                        console.log('about');
+                    }}
+                ></FormButton>
                 <FormInput label="Your Name" value={this.state.name} onChangeText={(newText) => this.setState({name: newText})}></FormInput>
 
-                <FormHeader title="Security" subtitle="You can secure your notes with a pin or fingerprint. You an also add a layer of security by encripting your notes."></FormHeader>
-                <FormInput label="Pin"></FormInput>
-                <FormInput label="Encryption"></FormInput>
-
-                <FormInput label="Preview Lines" keyboardType="number-pad"></FormInput>
-
-                <FormInput label="Fingerprints"></FormInput>
-
-                <FormSelect label="demo" items={this.state.selectItems} value={this.state.selectedItem} onChangeValue={(v) => this.setState({selectedItem: v})}></FormSelect>
+                <FormHeader title="Security" subtitle="You can secure your notes with a 6-8 digit PIN or fingerprint. You will be prompted with a login screen every time you open the app."></FormHeader>
+                <FormButton
+                    label="Set PIN"
+                    onPress={() => {
+                        console.log('set pin');
+                    }}
+                ></FormButton>
 
                 <FormSwitch description="Fingerprint lock" thumbColor="#2ecc71" value={this.state.fingerprintLock} onValueChange={async (newValue) => {
                     let set = JSON.stringify({auth_enabled: newValue});
@@ -178,197 +163,50 @@ class SettingsScreen extends React.Component {
                     this.setState({fingerprintLock: newValue});
                 }}></FormSwitch>
 
-                <FormSwitch description="Display full entries" thumbColor="#2ecc71" value={this.state.displayFullEntries} onValueChange={async (newValue) => {
-                    let set = JSON.stringify({display_full_entries: newValue});
-                    await AsyncStorage.setItem('display_full_entries', set);
-                    console.log(set);
-                    this.setState({displayFullEntries: newValue});
-                }}></FormSwitch>
-                
-                <Button
-                    title="Backup Data"
-                    color="#f194ff"
+
+                <FormHeader title="Appearance"></FormHeader>
+                <FormInput label="Preview Lines" keyboardType="number-pad"></FormInput>
+
+
+                <FormSelect label="demo" items={this.state.selectItems} value={this.state.selectedItem} onChangeValue={(v) => {
+                    this.setState({selectedItem: v});
+                    let color = this.state.selectItems[v];
+                    global.THEME_COLOR = color.label;
+                    // console.log();
+                }}></FormSelect>
+
+                <FormHeader title="Data" subtitle="You can use this section to backup your data or import a previous backup. Make sure you do this regularly in order to keep your entries safe. This is the only way of restoring your data in case your device is lost, broken or stolen."></FormHeader>
+
+                <FormButton
+                    label="Backup entries"
                     onPress={() => {
                         this.downloadFile();
-                        console.log('hesy');
                     }}
-                />
+                ></FormButton>
 
-                <Button
-                    title="Restore Backup"
-                    color="#4fff19"
+                <FormButton
+                    label={this.state.restoreBackupLabel}
                     onPress={() => {
                         this.restoreBackup();
-                        console.log('restoring');
                     }}
-                />
+                ></FormButton>
 
-                <Button
-                    title="Clear Data"
-                    color="#fff419"
+                <FormButton
+                    label="Delete all entries"
                     onPress={() => {
                         this.clearData();
-                        console.log('clear');
                     }}
-                />
-                
+                ></FormButton>
 
-
-
-{/* 
-                <Text style={styles.header}>2019</Text>
-                <Text style={styles.subtitle} value={this.state.name} onChangeText={(newText) => this.setState({name: newText})}>JAN</Text> */}
-
-                {/* <ScrollView style={styles.heatMapScroll} horizontal={true} showsHorizontalScrollIndicator={false}>
-                    <View style={styles.heatmap}>
-                        <View style={styles.hmWeeks}>
-                            {this.generateBlocks()}
-                            {this.generateBlocks()}
-                            {this.generateBlocks()}
-                            {this.generateBlocks()}
-                            {this.generateBlocks()}
-                            {this.generateBlocks()}
-                            {this.generateBlocks()}
-                            {this.generateBlocks()}
-                            {this.generateBlocks()}
-                            {this.generateBlocks()}
-                            {this.generateBlocks()}
-                            {this.generateBlocks()}
-                            {this.generateBlocks()}
-                            {this.generateBlocks()}
-                            {this.generateBlocks()}
-                            {this.generateBlocks()}
-                            {this.generateBlocks()}
-                            {this.generateBlocks()}
-                            {this.generateBlocks()}
-                            {this.generateBlocks()}
-                            {this.generateBlocks()}
-                            {this.generateBlocks()}
-                            {this.generateBlocks()}
-                            {this.generateBlocks()}
-                            {this.generateBlocks()}
-                            {this.generateBlocks()}
-                            {this.generateBlocks()}
-                            {this.generateBlocks()}
-                            {this.generateBlocks()}
-                            {this.generateBlocks()}
-                        </View>
-                    </View>
-                </ScrollView> */}
+                <FormHeader
+                    subtitle="Words for Android is developed with ❤ in beautiful Kingston, ON, Canada by Ivan Melo."
+                ></FormHeader>
             </ScrollView>
         )
     }
 }
 
-var colors = [
-    '#007cbc',
-    '#0099d2',
-    '#009d50',
-    '#74ae36',
-    '#acc71a',
-    '#ebaa12',
-    '#e88810',
-    '#e93510',
-    '#e12b51',
-    '#b4357c',
-    '#6d3f97',
-    '#464098',
-    '#cccccc'
-];
-
-
-var monthEntries2 = [
-    12,
-    1,
-    12,
-    4,
-    9,
-    12,
-    21,
-    0,
-    0,
-    0,
-    0,
-    0
-];
-
 var styles = StyleSheet.create({
-    mainView: {
-        backgroundColor: '#f9f9f9',
-    },
-    header: {
-        padding: 15,
-        color: '#333',
-        fontSize: 24,
-        fontWeight: 'bold'
-    },
-    subtitle: {
-        fontSize: 18,
-        paddingHorizontal: 15,
-        color: '#333'
-    },
-
-
-
-
-    calendarRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginLeft: 15,
-        marginRight: 5,
-        marginBottom: 10,
-    },
-    calendarBlock: {
-        flex: 1,
-        paddingHorizontal: 10,
-        paddingTop: 10,
-        paddingBottom: 10,
-        backgroundColor: '#007cbc',
-        marginRight: 10,
-        borderRadius: 5,
-    },
-    calendarLabel: {
-        fontSize: 18,
-        color: '#fff',
-        fontWeight: 'bold',
-    },
-    calendarStats: {
-        color: '#fff',
-        fontSize: 12,
-    },
-    calendarStatsLg: {
-        fontSize: 18,
-    },
-
-    heatMapScroll: {
-        // marginLeft: 15,
-    },
-    heatmap: {
-        flexDirection: 'row',
-    },
-    hmColumn: {
-        flexDirection: 'column',
-    },
-    hmWeeks: {
-        flexDirection: 'row',
-        marginLeft: 15,
-        marginRight: 15,
-    },
-    hmBlock: {
-        backgroundColor: global.THEME_COLOR,
-        height: 20,
-        width: 20,
-        marginBottom: 3,
-        marginRight: 3,
-        textAlign: 'center',
-        borderRadius: 3,
-    },
-    hmText: {
-        color: '#fff',
-        textAlign: 'center',
-        flex: 1,
-        justifyContent: 'space-between'
-    }
 
 });
 

@@ -7,7 +7,9 @@ import {
     ScrollView,
     ToastAndroid,
     Modal,
-    Text
+    Text,
+    Vibration,
+    Button,
 } from 'react-native';
 import {AntDesign} from '@expo/vector-icons';
 import FormInput from '../components/FormInput';
@@ -22,7 +24,7 @@ class EntryScreen extends React.Component {
      * Holds the state of this screen.
      */
     state = {
-        isEditing: true,
+        isEditing: false,
         isCalendarVisible: false,
         entry: new Entry(),
         markedDates: {}
@@ -36,24 +38,25 @@ class EntryScreen extends React.Component {
             title: navigation.getParam('headerTitle', ''),
             headerRight: (
                 <View>
-                    {navigation.getParam('isEditing', navigation.getParam('entryId', false)) ? (
-                    <View style={{ display: 'flex', flexDirection: 'row' }}>
-                            <TouchableOpacity onPress={navigation.getParam('onPressDelete')} style={[styles.rightMenuIcon, styles.marginRight5]}>
-                                <AntDesign name="delete" size={25} style={{ color: '#fff' }} />
-                            </TouchableOpacity>
-                            <TouchableOpacity onPress={navigation.getParam('onPressEdit')} style={styles.rightMenuIcon}>
-                                <AntDesign name="edit" size={25} style={{ color: '#fff' }} />
-                            </TouchableOpacity>
-                        </View>
-                        ) : (
-                        <View style={{ display: 'flex', flexDirection: 'row' }}>
-                            <TouchableOpacity onPress={navigation.getParam('onPressCalendar')} style={[styles.rightMenuIcon, styles.marginRight5]}>
-                                <AntDesign name="calendar" size={25} style={{ color: '#fff' }} />
-                            </TouchableOpacity>
-                            <TouchableOpacity onPress={navigation.getParam('onPressSave')} style={styles.rightMenuIcon}>
-                                <AntDesign name="check" size={25} style={{ color: '#fff' }} />
-                            </TouchableOpacity>
-                        </View>
+                    {navigation.getParam('isEditing') ? // Initial value comes from HomeScreen.js. Will only be true when creating a new entry. When viewing an entry, editing will be disabled until user presses edit button.
+                        (
+                            <View style={{ display: 'flex', flexDirection: 'row' }}>
+                                <TouchableOpacity onPress={navigation.getParam('onPressCalendar')} style={[styles.rightMenuIcon, styles.marginRight5]}>
+                                    <AntDesign name="calendar" size={25} style={{ color: '#fff' }} />
+                                </TouchableOpacity>
+                                <TouchableOpacity onPress={navigation.getParam('onPressSave')} style={styles.rightMenuIcon}>
+                                    <AntDesign name="check" size={25} style={{ color: '#fff' }} />
+                                </TouchableOpacity>
+                            </View>
+                            ) : (
+                            <View style={{ display: 'flex', flexDirection: 'row' }}>
+                                <TouchableOpacity onPress={navigation.getParam('onPressDelete')} style={[styles.rightMenuIcon, styles.marginRight5]}>
+                                    <AntDesign name="delete" size={25} style={{ color: '#fff' }} />
+                                </TouchableOpacity>
+                                <TouchableOpacity onPress={navigation.getParam('onPressEdit')} style={styles.rightMenuIcon}>
+                                    <AntDesign name="edit" size={25} style={{ color: '#fff' }} />
+                                </TouchableOpacity>
+                            </View>
                         )
                     }
                 </View>
@@ -105,11 +108,16 @@ class EntryScreen extends React.Component {
             selectedColor: global.THEME_COLOR
         };
 
-        // Updates title and set state.
+        if (! entryId) {
+            this.props.navigation.setParams({
+                isEditing: true
+            });
+        }
+
         this.setTitle(this.getWrittenDate(entry.date));
         this.setState({
             entry, 
-            isEditing: entryId ? false : true, 
+            isEditing: ! entryId,
             markedDates
         });
     }
@@ -146,15 +154,10 @@ class EntryScreen extends React.Component {
     /**
      * Called when edit button is pressed.
      */
-    onPressEdit = () => {
-        console.log('edit');
-
-        this.setTitle('editing')
-        
+    onPressEdit = () => {        
         this.props.navigation.setParams({
-            isEditing: true,
+            isEditing: true
         });
-
         this.setState({isEditing: true});
     }
 
@@ -169,7 +172,31 @@ class EntryScreen extends React.Component {
      * Called when the delete button is pressed.
      */
     onPressDelete = () => {
-        console.log('deletePressed');
+        // console.log('deletePressed');
+        Vibration.vibrate(4);
+
+        // Displays alert to confirm the deletion of the entry.
+        Alert.alert(
+            'Delete entry',
+            'Are you sure you want to delete this entry?',
+            [
+                {
+                    text: 'Cancel',
+                    onPress: () => {},
+                    style: 'cancel',
+                },
+                {
+                    text: 'Ok', onPress: async () => {
+                        let entry = this.state.entry;
+                        await entry.destroy();
+                        this.props.navigation.goBack();
+                    }
+                },
+            ],
+            {
+                cancelable: true
+            },
+        );
     }
 
     /**
@@ -249,6 +276,23 @@ class EntryScreen extends React.Component {
     render() {
         return (
             <ScrollView style={styles.mainView}>
+                <FormInput
+                    value={this.state.entry.entry}
+                    multiline={true}
+                    style={{ backgroundColor: '#afafaf' }}
+                    numberOfLines={10}
+                    editable={this.state.isEditing}
+                    textInputStyle={styles.textInputStyle}
+                    // autoFocus={true} // Focus input on componentDidMount.
+                    placeholder="How was your day?" // TODO: Translate this.
+                    onChangeText={(text) => this.setState(prevState => ({
+                        entry: {
+                            ...prevState.entry,
+                            entry: text
+                        }
+                    }))}
+                ></FormInput>
+                
                 <Modal
                     animationType="fade"
                     transparent={true}
@@ -264,31 +308,17 @@ class EntryScreen extends React.Component {
                                 onDayPress={(day) => this.onChangeDate(day)}
                             />
                             <TouchableOpacity
-                                onPress={() => this.setCalendarVisible(false)}
-                                style={styles.calendarButtonBox}
+                                onPress={() => 
+                                    this.setCalendarVisible(false)
+                                }
+                                style={[styles.calendarButtonBox, {backgroundColor: global.THEME_COLOR}]}
                                 activeOpacity={0.5}
-                            >   
+                            >
                                 <Text style={styles.calendarButtonText}>Done</Text>
                             </TouchableOpacity>
                         </View>
                     </View>
                 </Modal>
-
-                <FormInput
-                    value={this.state.entry.entry}
-                    multiline={true}
-                    style={{ backgroundColor: '#afafaf' }}
-                    numberOfLines={10}
-                    editable={this.state.isEditing}
-                    textInputStyle={styles.textInputStyle}
-                    placeholder="How was your day?" // TODO: Translate this.
-                    onChangeText={(text) => this.setState(prevState => ({
-                        entry: {
-                            ...prevState.entry,
-                            entry: text
-                        }
-                    }))}
-                ></FormInput>
             </ScrollView>
         )
     }
@@ -334,16 +364,17 @@ var styles = StyleSheet.create({
         bottom: 0,
     },
     calendarButtonBox: {
-        paddingHorizontal: 20, 
-        paddingTop: 5,
-        paddingBottom: 15
+        // backgroundColor: global.THEME_COLOR,
+        backgroundColor: 'red',
+        marginTop: 5,
+        marginHorizontal: 15,
+        marginBottom: 15,
+        borderRadius: 10,
+        padding: 10
     },
     calendarButtonText: {
-        backgroundColor: global.THEME_COLOR,
         color: '#fff', 
         fontSize: 18,
-        padding: 10,
-        borderRadius: 10,
         textAlign: 'center'
     }
 });

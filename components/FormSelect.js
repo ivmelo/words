@@ -6,8 +6,7 @@ import {
     TextInput, 
     ScrollView, 
     Modal, 
-    TouchableNativeFeedback, 
-    TouchableHighlight
+    TouchableOpacity, 
 } from 'react-native';
 import PropTypes from 'prop-types';
 import FormHeader from './FormHeader';
@@ -63,18 +62,18 @@ class FormSelect extends Component {
                             <FormHeader title={this.props.label.toUpperCase()} borderTop={true}></FormHeader>
                             <ScrollView>
                                 {this.props.items.map((item, index) => 
-                                    <TouchableNativeFeedback key={index} onPress={() => this.optionSelected(item)}>
+                                    <TouchableOpacity key={index} onPress={() => this.optionSelected(item)}>
                                         <View style={styles.itemBox}>
                                             <Text style={styles.itemLabel}>{item.label}</Text>
                                         </View>
-                                    </TouchableNativeFeedback>
+                                    </TouchableOpacity>
                                 )}
                             </ScrollView>
                         </View>
                     </View>
                 </Modal>
                 
-                <TouchableNativeFeedback onPress={() => this.setModalVisible(true)}>
+                <TouchableOpacity onPress={() => this.setModalVisible(true)}>
                     <View style={styles.textInputBox}>
                         {this.props.label && 
                             <Text style={styles.textInputLabel}>{this.props.label.toUpperCase()}</Text>
@@ -82,7 +81,7 @@ class FormSelect extends Component {
                         
                         <TextInput style={styles.textInput} value={this.getDisplayValue()} placeholder={this.props.placeholder} editable={false}></TextInput>
                     </View>
-                </TouchableNativeFeedback>
+                </TouchableOpacity>
             </View>
         );
     }

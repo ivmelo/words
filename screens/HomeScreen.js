@@ -6,7 +6,7 @@ import {
     View, 
     RefreshControl, 
     TouchableOpacity, 
-    TouchableNativeFeedback, 
+    TouchableHighlight, 
     StatusBar, 
     Vibration, 
     Alert
@@ -115,16 +115,16 @@ class HomeScreen extends React.Component {
             onPressCalendar: this.onPressCalendar,
         });
 
-        // Completely destroys database and recreates it.
+        // -> Uncomment this line to wipe all databases and start from scratch.
         // await Migrations.wipeDatabase();
 
-        // Run the SQLite migrations.
+        // -> Run the SQLite migrations.
         await Migrations.run();
 
-        // Create fake entries for testing.
+        // -> Create fake entries for testing.
         // this.populateEntries(new Date(2018, 0, 1), 365 * 2 + 10, true);
 
-        // Update the entries counter in the calendar component.
+        // -> Update the entries counter in the calendar component.
         // await this.updateEntriesCountByMonth();
     }
 
@@ -139,7 +139,7 @@ class HomeScreen extends React.Component {
      * Called when settings menu button is pressed.
      */
     onPressSettings = () => {
-        this.setThemeColor(global.THEME_COLOR);
+        // this.setThemeColor(global.THEME_COLOR);
         this.props.navigation.navigate('SettingsScreen');
     }
 
@@ -147,8 +147,12 @@ class HomeScreen extends React.Component {
      * Called when floating add button is pressed.
      */
     onPressAdd = () => {
-        this.setThemeColor(global.THEME_COLOR);
-        this.props.navigation.navigate('EntryScreen', {year: this.state.year, month: this.state.month});
+        // this.setThemeColor(global.THEME_COLOR);
+        this.props.navigation.navigate('EntryScreen', {
+            year: this.state.year, 
+            month: this.state.month,
+            isEditing: true
+        });
     }
 
     /**
@@ -157,7 +161,7 @@ class HomeScreen extends React.Component {
      * @param {string} color The theme color
      */
     setThemeColor(color) {
-        this.setState({themeColor: color});
+        // this.setState({themeColor: color});
         this.props.navigation.setParams({themeColor: color});
     }
 
@@ -197,7 +201,8 @@ class HomeScreen extends React.Component {
     onPressEntry(entry) {
         this.props.navigation.navigate('EntryScreen', {
             entryId: entry.id,
-            entryDate: entry.date
+            entryDate: entry.date,
+            isEditing: false,
         });
     }
 
@@ -335,13 +340,13 @@ class HomeScreen extends React.Component {
             <View style={styles.mainView}>
                 <StatusBar backgroundColor={this.state.themeColor} barStyle="light-content" />
 
-                <TouchableNativeFeedback onLongPress={() => {
-                    this.setThemeColor('#000');
-                }} onPress={() => this.onPressAdd()} useForeground={true}  background={TouchableNativeFeedback.Ripple('#aaa', true)}>
-                    <View style={[styles.floatingButton, {backgroundColor: this.state.themeColor}]}>
-                        <Ionicons name="ios-add" size={35} style={{color: '#fff'}}/>
-                    </View>
-                </TouchableNativeFeedback>
+                <TouchableOpacity 
+                    style={[styles.floatingButton, {backgroundColor: this.state.themeColor}]}
+                    onLongPress={() => {
+                    // this.setThemeColor('#000');
+                }} onPress={() => this.onPressAdd()} useForeground={true}>
+                    <Ionicons name="ios-add" size={35} style={{color: '#fff'}}/>
+                </TouchableOpacity>
 
                 <Modal
                     animationType="fade"

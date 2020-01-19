@@ -13,7 +13,9 @@ class FormHeader extends Component {
     render() {
         return (
             <View style={[styles.headerBox, {borderTopWidth: this.props.borderTop ? 0.3 : 0}]}>
-                <Text style={styles.headerTitle}>{this.props.title.toUpperCase()}</Text>
+                {this.props.title &&
+                    <Text style={styles.headerTitle}>{this.props.title.toUpperCase()}</Text>
+                }
                 {this.props.subtitle &&
                     <Text style={styles.headerSubtitle}>{this.props.subtitle}</Text>
                 }
@@ -26,7 +28,7 @@ class FormHeader extends Component {
  * Prop types for validation.
  */
 FormHeader.propTypes = {
-    title: PropTypes.string.isRequired,
+    title: PropTypes.string,
     subtitle: PropTypes.string,
 };
 
