@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-    AsyncStorage, 
     Text, 
     StyleSheet, 
     View, 
@@ -9,123 +8,247 @@ import {
 } from 'react-native';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { Ionicons, EvilIcons } from '@expo/vector-icons';
+import * as SecureStore from 'expo-secure-store';
 
 class HomeScreen extends React.Component {
     state = {
-        message: 'Idle.',
+        mode: 'auth', // auth|create|update.
+        step: 0,
+        isAuthenticated: false,
+        message: '',
+        secret: '0000000000', // 10 Chars is more than pinpad can take.
         pin: '',
         hiddenPin: '',
-        icon: 'lock'
-    }
-
-    async componentDidMount() {
-        let needsAuth = true;
-        
-        // try {
-        //     let set = await AsyncStorage.getItem('auth_enabled');
-            
-        //     console.log(set);
-
-        //     if (set) {
-        //         let set = JSON.parse(set);
-        //         if (set.auth_enabled) {
-        //             needsAuth = true;
-        //         }
-        //     }
-
-        // } catch (error) {
-        //     console.log(error);
-        // }
-
-        this.authenticate(! needsAuth);
+        confirmPin: '',
+        icon: 'md-lock',
+        iconColor: '#555',
+        actionKeyIcon: 'md-finger-print'
     }
 
     /**
-     * Defines the navigation options of this screen including header title, color, buttons, etc...
+     * React Native LifeCycle. Called when component is mounted.
+     */
+    async componentDidMount() {        
+        let mode = this.props.navigation.getParam('mode', 'auth');
+
+        console.log(this.props.navigation.getParam('mode'));
+
+
+        console.log(mode);
+
+        
+        this.setState({
+            mode: 'mode'
+        });
+
+        if (mode === 'auth') {
+            SecureStore.getItemAsync('access_pin').then((secret) => {
+                this.setState({secret});
+            }).catch(err => {
+                // Error fetching access pin. 
+                // This should NEVER happen.
+            });
+    
+            // If fingerprints...
+            this.authenticateWithFingerprint();
+            // If regular auth
+            // Set this.setState({message: 'Please enter your PIN'});
+        } else if (mode === 'create') {
+            this.createPin(1);
+        }
+    }
+
+    /**
+     * Prompts the user to create a PIN.
+     * 
+     * @param {int} step The current step in the creation process.
+     */
+    createPin(step = 1) {
+        if (step === 1) { // In step 1, the user creates a PIN.
+            this.setState({
+                message: 'Create PIN (4-8 digits)',
+                actionKeyIcon: 'md-checkmark',
+                icon: 'md-key',
+                pin: '',
+                hiddenPin: '',
+                confirmPin: '',
+                step: 1
+            });
+        } if (step === 2) { // In step 2, the user confirms the PIN.
+            this.setState({
+                message: 'Confirm PIN',
+                actionKeyIcon: 'md-checkmark',
+                icon: 'md-key',
+                pin: '',
+                hiddenPin: '',
+                confirmPin: this.state.pin,
+                step: 2
+            });
+        } if (step === 3) { // In step 3, the system confirms the PIN, saves and redirects.
+            if (this.state.pin === this.state.confirmPin) {
+                // Success.
+                SecureStore.setItemAsync('access_pin', this.state.pin).then(() => {
+                    this.setState({
+                        isAuthenticated: true,
+                        icon: 'md-checkmark',
+                        iconColor: global.THEME_COLOR
+                    });
+
+                    window.setTimeout(() => {
+                        this.props.navigation.navigate('SettingsScreen');
+                    }, 1000)
+                }).catch(err => {
+                    // Error creating access pin. 
+                    // This should NEVER happen.
+                    this.createPin(1);
+                });
+            } else {
+                // Different pins, try again.
+                this.createPin(1);
+            }
+
+            console.log(this.state);
+        }
+    }
+    
+    
+    /**
+     * Defines the navigation options of this screen including header title, colour, buttons, etc...
+     * Null hides the header and navigation buttons.
      */
     static navigationOptions = {
         header: null
     };
 
-    authenticate(skipAuth = false) {
-        
-        // If auth is disabled of the app is being tested...
-        if (skipAuth) {
-            this.props.navigation.navigate('App');
-            return;
-        }
-
-        LocalAuthentication.hasHardwareAsync().then((hasHardware => {
-            console.log(hasHardware);
-
-            this.setState({message: 'Please place fingerprint...'});
+    authenticateWithFingerprint() {
+        LocalAuthentication.hasHardwareAsync().then(((hasHardware) => {
+            this.setState({
+                icon: 'ios-finger-print',
+                iconColor: '#555',
+                message: 'Place fingerprint or enter PIN',
+            });
 
             LocalAuthentication.authenticateAsync().then(authenticated => {
                 console.log(authenticated);
-
-                this.setState({message: JSON.stringify(authenticated)});
-
                 if (authenticated.success) {
-                    this.setState({icon: 'unlock'});
-
-                    setTimeout(() => {
-                        this.props.navigation.navigate('App');
-                    }, 1000);
+                    // Success
+                    this.authenticated('fingerprint');
+                    return;
+                } else if (authenticated.error === 'authentication_failed') {
+                    this.setState({
+                        icon: 'md-lock',
+                        iconColor: '#555',
+                        message: 'Error, please try again.',
+                    });
+                    window.setTimeout(() => {
+                        this.authenticateWithFingerprint();
+                    }, 500);
+                } else {
+                    this.setState({message: 'Please enter your PIN'});
                 }
-                // SUCCESS
-            }).catch(error => {
-                // ERROR AUTHENTICATING
-                this.setState({message: JSON.stringify(authenticated)});
+            }).catch((error) => {
+                // Error when authing.
+                this.setState({message: 'Please enter your PIN'});
             });
-        })).catch(error => {
-            // NO AUTH HARDWARE
-            this.setState({message: JSON.stringify(authenticated)});
+        })).catch((error) => {
+            this.setState({message: 'Please enter your PIN'});
+            // No hardware auth.
         });
     }
+    
+    /**
+     * Called when the user sucessfully authenticated with the fingerprint or PIN.
+     * 
+     * @param {string} method The authentication method (pin, fingerprint).
+     */
+    authenticated(method = 'pin') { // pin or hardware
+        let icon  = method === 'pin' ? 'md-unlock' : 'ios-finger-print';
 
+        this.setState({
+            icon: icon,
+            iconColor: global.THEME_COLOR,
+            message: 'Success!',
+            isAuthenticated: true
+        });
+
+        setTimeout(() => {
+            this.props.navigation.navigate('App');
+        }, 1000);
+    }
+    
+
+    /**
+     * Handler for key pressed on PINpad.
+     * 
+     * @param {string} key 
+     */
     keyPressed(key) {
+        if (this.state.isAuthenticated) {
+            return;
+        }
+
         Vibration.vibrate(4);
         let pin = this.state.pin;
+
+        // AUth mode, reset pin if it reaches 8 chars.
+        if (this.state.mode === 'auth' && pin.length === 8) {
+            pin = '';
+            this.setState({
+                icon: 'md-lock',
+                message: 'Please enter your PIN',
+            });
+        }
         
         if (key === 'backspace') {
             if (pin.length > 0) {
                 pin = pin.slice(0, -1);
             }
-        } else if (key === 'ok') {
+        } else if (key === 'action') {
             // Do nothing for now.
+            if (this.state.mode === 'create') {
+                this.createPin(this.state.step + 1); // Advance to the next step.
+            }
+            return;
         } else {
-            pin = pin + String(key);
+            if (pin.length < 8) { // 8 chars max. Only adds until length == 7.
+                pin = pin + String(key);
+            }
         }
 
         let hiddenPin = '●'.repeat(pin.length);
-        console.log('*'.repeat(pin.length));
-        console.log(this.state.pin);
         this.setState({pin, hiddenPin});
+
+        // Auth mode, check if pin is correct.
+        if (this.state.mode === 'auth') {
+            if (pin === this.state.secret) {
+                this.authenticated('pin');
+            } else if (pin.length === 8) {
+                this.setState({
+                    icon: 'md-lock',
+                    message: 'Incorrect PIN, please try again.',
+                });
+            }
+        }
     }
 
+    /**
+     * Clears the PIN input field.
+     */
     clearPin() {
         Vibration.vibrate(4);
         this.setState({pin: '', hiddenPin: ''});
     }
 
+
     render() {
         return (
-            <View style={styles.mainView}>
-                {/* <Button onPress={() => {
-                    this.authenticateAsync();
-                }} title="Press Me!"></Button> */}
-                
-
-                <View>
-                    <Text>{this.state.message}</Text>
-                </View>
-
-                <View style={{backgroundColor: '#fff', width: 120, height: 120, justifyContent: 'center', borderRadius: 100}}>
-                    <EvilIcons name={this.state.icon} size={100} style={{color: '#444', alignSelf: 'center'}}/>
-                </View>
-
-                <View>
-                    <Text style={styles.pin}>{this.state.hiddenPin}</Text>   
+            <View style={[styles.mainView, {backgroundColor: global.THEME_COLOR}]}>
+                <View style={styles.feedbackBox}>
+                    <View style={styles.feedbackIconBox}>
+                        <Ionicons name={this.state.icon} size={50} style={{color: this.state.iconColor, alignSelf: 'center'}}/>
+                    </View>
+                    <Text style={styles.pin}>{this.state.hiddenPin}</Text>  
+                    <Text style={styles.message}>{this.state.message}</Text>
                 </View>
 
                 <View style={styles.keyPad}>
@@ -170,8 +293,8 @@ class HomeScreen extends React.Component {
                     </View>
 
                     <View style={styles.keyPadRow}>
-                        <TouchableOpacity onPress={() => this.keyPressed('ok')} style={styles.keyPadKey}>
-                            <Ionicons name="md-checkmark" size={25} style={styles.keyPadKeyLabel}/>
+                        <TouchableOpacity onPress={() => this.keyPressed('action')} style={styles.keyPadKey}>
+                            <Ionicons name={this.state.actionKeyIcon} size={25} style={styles.keyPadKeyLabel}/>
                         </TouchableOpacity>
                         
                         <TouchableOpacity onPress={() => this.keyPressed(0)} style={styles.keyPadKey}>
@@ -192,53 +315,59 @@ class HomeScreen extends React.Component {
 var styles = StyleSheet.create({
     mainView: {
         flex: 1,
-        // backgroundColor: global.THEME_COLOR,
         flexDirection: 'column',
-        backgroundColor: global.THEME_COLOR,
         justifyContent: 'space-between',
         alignItems: 'center'
     },
     keyPad: {
-        // flex: 1,
         backgroundColor: '#fff',
         width: '100%',
-        // borderWidth: 1,
-        // // marginBottom: 0
-        // borderTopLeftRadius: 15,
-        // borderTopRightRadius: 15,
-        // paddingTop: 25
-        paddingBottom: 20,
-        paddingTop: 20
+        paddingBottom: 30,
+        paddingTop: 30,
+        borderTopLeftRadius: 50,
+        borderTopRightRadius: 50
     },
     keyPadRow: {
-        // flex: 1,
         flexDirection: 'row',
         justifyContent: 'space-evenly',
-        // paddingHorizontal: 50,
         marginBottom: 0,
     },
     keyPadKey: {
-        // height: 50,
-        // width: 50,
         borderColor: '#000',
-        // borderWidth: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        // borderRadius: 10,
         paddingHorizontal: 30,
         paddingVertical:10,
     },
     keyPadKeyLabel: {
         fontSize: 30,
-        color: '#444',
+        color: '#555',
         fontWeight: 'bold',
-        // fontFamily: 'sans-serif-light'
+    },
+    feedbackBox: {
+        flexGrow: 1, 
+        width: '100%', 
+        justifyContent: 
+        'space-around', 
+        alignItems: 'center',
+        paddingTop: 80
+    },
+    feedbackIconBox: {
+        backgroundColor: '#fff', 
+        width: 120, 
+        height: 120, 
+        justifyContent: 'center', 
+        borderRadius: 100,
     },
     pin: {
         color: '#fff', 
         fontSize: 15, 
         letterSpacing: 5,
         fontWeight: 'bold'
+    },
+    message: {
+        fontSize: 18,
+        color: '#fff'
     }
 });
 

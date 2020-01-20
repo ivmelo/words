@@ -12,6 +12,8 @@
     "expo-document-picker": "~8.0.0",
     "expo-file-system": "~8.0.0",
     "expo-local-authentication": "~8.0.0",
+    "expo-mail-composer": "~8.0.0",
+    "expo-secure-store": "~8.0.0",
     "expo-sharing": "~8.0.0",
     "expo-sqlite": "~8.0.0",
     "lorem-ipsum-react-native": "^1.0.3",

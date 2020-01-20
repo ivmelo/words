@@ -19,6 +19,7 @@ if (Platform.OS === 'android') {
 }
 
 global.THEME_COLOR = '#2ecc71';
+global.IS_RESTORING_BACKUP = false;
 // global.THEME_COLOR = '#000';
 
 const AuthStack = createStackNavigator({
@@ -34,7 +35,7 @@ const AppStack = createStackNavigator({
     },
     SettingsScreen: {
         screen: SettingsScreen,
-    },
+    }
 }, {
     defaultNavigationOptions: {
         headerStyle: {
@@ -56,5 +57,5 @@ export default createAppContainer(createSwitchNavigator({
     App: AppStack,
     Auth: AuthStack,
 }, {
-    initialRouteName: 'App',
+    initialRouteName: 'AuthLoading',
 }));

@@ -3,168 +3,288 @@ import {
     StyleSheet, 
     AsyncStorage, 
     ScrollView, 
+    Alert,
+    ToastAndroid
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import * as DocumentPicker from 'expo-document-picker';
+import * as MailComposer from 'expo-mail-composer';
+import * as SecureStore from 'expo-secure-store';
 import Entry from '../models/Entry';
-import FormInput from '../components/FormInput';
 import FormHeader from '../components/FormHeader';
 import FormSwitch from '../components/FormSwitch';
 import FormSelect from '../components/FormSelect';
 import FormButton from '../components/FormButton';
 
+
+/**
+ * The Settings screen of the app. Used to add and edit entries.
+ */
 class SettingsScreen extends React.Component {
     state = {
         name: '',
+        pinLock: false,
         fingerprintLock: false,
         selectedItem: 1,
         restoreBackupLabel: 'Restore backup',
-        selectItems: [
+        backupEntriesLabel: 'Backup entries',
+        selectItems: [ // Array of colors for theming.
             {
                 label: '#007cbc',
                 value: 1
-            },
-            {
-                label: '#0099d2',
-                value: 2
-            },
-            {
-                label: '#009d50',
-                value: 3
             }
         ]
     };
 
+    /**
+     * Defines the navigation options of this screen including header title, color, buttons, etc...
+     */
     static navigationOptions = ({navigation}) => {
         return {
             title: 'Settings',
         }
     };
 
+    /**
+     * React Native LifeCycle. Called when component is mounted.
+     */
     async componentDidMount() {
-        let needsAuth = await AsyncStorage.getItem('auth_enabled');
-        let naobj = JSON.parse(needsAuth);
-        this.setState({fingerprintLock: naobj.auth_enabled});
-
-        let displayFullEntries = await AsyncStorage.getItem('display_full_entries');
-        console.log();
-        console.log(displayFullEntries);
-        let dfeobj = JSON.parse(displayFullEntries);
-        this.setState({displayFullEntries: dfeobj.display_full_entries});
-    }
-
-    async componentWillUnmount() {
-        console.log('unmounting...');
-    }
-
-    async clearData() {
-        Entry.destroyAll().then(async (entries) => {
-            console.log('ok');
+        // AsyncStorage.getItem('auth_settings').then((data) => {
+        //     let auth_settings = JSON.parse(data);
+        //     if (auth_settings) {
+        //         this.setState({
+        //             pinLock: auth_settings.pin_lock,
+        //             fingerprintLock: auth_settings.fingerprint_lock
+        //         });
+        //     } else {
+        //         this.setState({
+        //             pinLock: false,
+        //             fingerprintLock: false
+        //         });
+        //     }
+        //     console.log(auth_settings);
+        // }).catch(err => {
+        //     console.log(err);
+        // });
+        SecureStore.getItemAsync('access_pin').then((secret) => {
+            if (secret) {
+                this.setState({pinLock: true});
+            }
         }).catch(err => {
-            console.log(err);
+            // Error fetching access pin. 
+            // This should NEVER happen.
         });
     }
 
+    /**
+     * React Native LifeCycle. Called when component will unmount.
+     */
+    async componentWillUnmount() {
+        // TODO: Save settings...
+        console.log('Unmounting...');
+    }
+
+    /**
+     * Removes all entries from the database.
+     */
+    async wipeEntries() {
+        // Works on both Android and iOS
+        Alert.alert(
+            'WARNING',
+            'Are you sure you want to delete all diary entries? Once you delete your entries there will be no way to recover them unless you have a backup file to import.',
+                [{
+                    text: 'Delete All Entries',
+                    style: 'destructive',
+                    onPress: () => {
+                        Alert.alert(
+                            'WARNING',
+                            'Press DELETE to DELETE ALL ENTRIES or CANCEL.',
+                                [{
+                                    text: 'DELETE',
+                                    style: 'destructive',
+                                    onPress: () => {
+                                        Entry.destroyAll().then(async (entries) => {
+                                            ToastAndroid.show('Entries deleted', ToastAndroid.SHORT);
+                                        }).catch(err => {
+                                            console.log(err);
+                                        });
+                                    },
+                                },
+                                { 
+                                    text: 'Cancel', 
+                                    style: 'cancel',
+                                    onPress: () => {
+                                        console.log('Cancelled [2]');
+                                    } 
+                                }],
+                            {
+                                cancelable: true
+                            }
+                        );
+                    },
+                },
+                { 
+                    text: 'Cancel', 
+                    style: 'cancel',
+                    onPress: () => {
+                        console.log('Cancelled [1]')
+                    } 
+                }],
+            {
+                cancelable: true
+            }
+        );
+    }
+
+    /**
+     * Restores a backup from a JSON file.
+     */
     async restoreBackup() {
-        let resp = await DocumentPicker.getDocumentAsync();
-        let string = await FileSystem.readAsStringAsync(resp.uri);
-        let entrySet = JSON.parse(string);
+        if (global.IS_RESTORING_BACKUP) {
+            ToastAndroid.show('A backup is being restored in the background. Please wait.', ToastAndroid.SHORT);
+            return;
+        }
 
-        let totalEntries = entrySet.length;
-
-        for(let i = 0; i < totalEntries; i++) {
-            let record = entrySet[i];
-            let entry = new Entry();
-            entry.date = new Date(record.date);
-            entry.created_at = new Date(record.created_at);
-            entry.updated_at = new Date(record.updated_at);
-            entry.entry = record.entry;
-
-            await entry.save();
+        try {
+            global.IS_RESTORING_BACKUP = true;
+            let resp = await DocumentPicker.getDocumentAsync();
+            let string = await FileSystem.readAsStringAsync(resp.uri);
 
             this.setState({
-                restoreBackupLabel: 'Importing entries... [' + i + '/' + totalEntries + ']'
+                restoreBackupLabel: 'Validating backup file, please wait...'
             });
-            console.log(i);
+
+            let entrySet = JSON.parse(string);
+            let totalEntries = entrySet.length;
+
+            // Validate all fields of the backup file...
+            for(let i = 0; i < totalEntries; i++) {
+                let record = entrySet[i];
+
+                if (typeof record.date === 'undefined' || isNaN(new Date(record.date).getTime())) {
+                    throw 'Invalid file...';
+                }
+
+
+                if (typeof record.created_at === 'undefined' || isNaN(new Date(record.date).getTime())) {
+                    throw 'Invalid file...';
+                }
+
+                if (typeof record.updated_at === 'undefined' || isNaN(new Date(record.date).getTime())) {
+                    throw 'Invalid file...';
+                }
+
+                if (typeof record.entry !== 'string') {
+                    throw 'Invalid file...';
+                }
+
+                this.setState({
+                    restoreBackupLabel: 'Validating backup file... [' + i + '/' + totalEntries + ']'
+                });
+            }
+
+            for(let i = 0; i < totalEntries; i++) {
+                let record = entrySet[i];
+                let entry = new Entry();
+                entry.date = new Date(record.date);
+                entry.created_at = new Date(record.created_at);
+                entry.updated_at = new Date(record.updated_at);
+                entry.entry = record.entry;
+    
+                await entry.save();
+    
+                this.setState({
+                    restoreBackupLabel: 'Importing entries... [' + i + '/' + totalEntries + ']'
+                });
+                console.log(i);
+            }
+
+            ToastAndroid.show('Backup restored successfully.', ToastAndroid.SHORT);
+        } catch (err) {
+            ToastAndroid.show('Invalid file. Please try again.', ToastAndroid.SHORT);
         }
+
+        global.IS_RESTORING_BACKUP = false;
 
         this.setState({
             restoreBackupLabel: 'Restore backup'
         });
-        
-
-        // geiso.forEach(async (record) => {
-        //     // Creates new entry object.
-        //     let e = new Entry();
-        //     e.date = new Date(record.date);
-        //     e.created_at = new Date(record.created_at);
-        //     e.updated_at = new Date(record.updated_at);
-        //     e.entry = record.entry;
-
-        //     // Saves async while waiting.
-        //     await e.save();
-        // });
     }
     
-
-    async downloadFile() {
-        let entries = Entry.all().then(async (entries) => {
-            let entries_json = JSON.stringify(entries);
-            console.log(entries_json);
-            // let enstr = JSON.stringify(entries);
-            // console.log(enstr);
-            let fileName ='words-' + Date.now() + '.json';
-            const fileUri = FileSystem.cacheDirectory + fileName;
-            await FileSystem.writeAsStringAsync(fileUri, entries_json, { encoding: FileSystem.EncodingType.UTF8 });
-            await Sharing.shareAsync(FileSystem.cacheDirectory + fileName);
-        }).catch((err) => {
-            console.log('error');
+    /**
+     * Generates a JSON file for backup and shares so the user can save wherever they want.
+     */
+    async backupEntries() {
+        this.setState({
+            backupEntriesLabel: 'Creating backup file...'
         });
 
-        console.log(entries);
-
-
-
-        // const fileUri = FileSystem.cacheDirectory + 'demo.txt';
-        // await FileSystem.writeAsStringAsync(fileUri, "Hello World", { encoding: FileSystem.EncodingType.UTF8 });
-        // await Sharing.shareAsync(FileSystem.cacheDirectory + 'demo.txt');
-        console.log('oks');
+        Entry.all().then(async (entries) => {
+            let entriesJson = JSON.stringify(entries);
+            let fileName ='words-backup-' + Date.now() + '.json';
+            const fileUri = FileSystem.cacheDirectory + fileName;
+            await FileSystem.writeAsStringAsync(fileUri, entriesJson, { encoding: FileSystem.EncodingType.UTF8 });
+            await Sharing.shareAsync(FileSystem.cacheDirectory + fileName);
+        }).catch((err) => {
+            console.log(err);
+        }).finally(() => {
+            this.setState({
+                backupEntriesLabel: 'Backup entries'
+            });
+        });
     }
 
+    async togglePin() {
+        if (this.state.pinLock) {
+            console.log('remove pin');
+            
+            SecureStore.deleteItemAsync('access_pin').then(() => {
+                this.setState({
+                    pinLock: false,
+                    fingerprintLock: false
+                });
+            }).catch(err => {
+                // Error creating access pin. 
+                // This should NEVER happen.
+                console.log('Error removing pin...');
+            });
+
+        } else {
+            console.log('create pin');
+            this.props.navigation.navigate('AuthScreen');
+        }
+    }
+
+    /**
+     * React Native Render function.
+     */
     render() {
         return (
             <ScrollView>
-                {/* <Text style={styles.header}>Hey {this.state.name}.</Text>
-                <Text style={styles.subtitle}>You can use the fields below to customise this app to better suit your needs.</Text> */}
-
-                <FormHeader title="General"></FormHeader>
+                
+                <FormHeader title="Security" subtitle="You can secure your diary with a PIN or fingerprint. If you chose to do so, you will be propted to enter your PIN or fingerprints when opening the app."></FormHeader>
                 <FormButton
-                    label="About Words"
-                    onPress={() => {
-                        console.log('about');
-                    }}
-                ></FormButton>
-                <FormInput label="Your Name" value={this.state.name} onChangeText={(newText) => this.setState({name: newText})}></FormInput>
-
-                <FormHeader title="Security" subtitle="You can secure your notes with a 6-8 digit PIN or fingerprint. You will be prompted with a login screen every time you open the app."></FormHeader>
-                <FormButton
-                    label="Set PIN"
-                    onPress={() => {
-                        console.log('set pin');
-                    }}
+                    label={this.state.pinLock ? 'Remove access PIN' : 'Set access PIN'}
+                    onPress={() => this.togglePin()}
                 ></FormButton>
 
-                <FormSwitch description="Fingerprint lock" thumbColor="#2ecc71" value={this.state.fingerprintLock} onValueChange={async (newValue) => {
+                <FormSwitch 
+                    description="Fingerprint lock" 
+                    thumbColor="#2ecc71" 
+                    value={this.state.fingerprintLock} 
+                    disabled={! this.state.pinLock}
+                    onValueChange={async (newValue) => {
                     let set = JSON.stringify({auth_enabled: newValue});
                     await AsyncStorage.setItem('auth_enabled', set);
                     console.log(set);
                     this.setState({fingerprintLock: newValue});
                 }}></FormSwitch>
 
+                
 
-                <FormHeader title="Appearance"></FormHeader>
+
+                {/* <FormHeader title="Appearance"></FormHeader>
                 <FormInput label="Preview Lines" keyboardType="number-pad"></FormInput>
 
 
@@ -173,14 +293,17 @@ class SettingsScreen extends React.Component {
                     let color = this.state.selectItems[v];
                     global.THEME_COLOR = color.label;
                     // console.log();
-                }}></FormSelect>
+                }}></FormSelect> */}
 
-                <FormHeader title="Data" subtitle="You can use this section to backup your data or import a previous backup. Make sure you do this regularly in order to keep your entries safe. This is the only way of restoring your data in case your device is lost, broken or stolen."></FormHeader>
+                {/* <FormHeader title="Daily Reminder" subtitle="Setting a daily reminder will send you a notification every day at the defined time, so you never forget to write about your day."></FormHeader> */}
+
+
+                <FormHeader title="Your Data" subtitle="You can use this section to backup your data or import a previous backup. Make sure you do this regularly in order to keep your entries safe. This is the only way of restoring your data in case your device is lost, broken or stolen."></FormHeader>
 
                 <FormButton
-                    label="Backup entries"
+                    label={this.state.backupEntriesLabel}
                     onPress={() => {
-                        this.downloadFile();
+                        this.backupEntries();
                     }}
                 ></FormButton>
 
@@ -194,12 +317,25 @@ class SettingsScreen extends React.Component {
                 <FormButton
                     label="Delete all entries"
                     onPress={() => {
-                        this.clearData();
+                        this.wipeEntries();
+                    }}
+                ></FormButton>
+
+                <FormHeader title="Feedback and Support"></FormHeader>
+                <FormButton
+                    label="Contact the developer"
+                    onPress={() => {
+                        MailComposer.composeAsync({
+                            recipients: ['meloivanilson@gmail.com'],
+                            subject: 'Words App Feedback'
+                        }).then((status) => {
+                            ToastAndroid.show('Thank You!', ToastAndroid.SHORT);
+                        });
                     }}
                 ></FormButton>
 
                 <FormHeader
-                    subtitle="Words for Android is developed with ❤ in beautiful Kingston, ON, Canada by Ivan Melo."
+                    subtitle="Words for Android is developed with ❤ in beautiful Kingston, Canada by I. Melo."
                 ></FormHeader>
             </ScrollView>
         )

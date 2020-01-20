@@ -9,7 +9,6 @@ import {
     Modal,
     Text,
     Vibration,
-    Button,
 } from 'react-native';
 import {AntDesign} from '@expo/vector-icons';
 import FormInput from '../components/FormInput';

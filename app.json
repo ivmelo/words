@@ -1,21 +1,16 @@
 {
   "expo": {
     "name": "Words",
-    "slug": "Words",
-    "privacy": "public",
+    "slug": "words",
+    "privacy": "unlisted",
     "sdkVersion": "36.0.0",
     "platforms": [
       "ios",
       "android"
     ],
-    "version": "1.0.1",
+    "version": "0.0.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
     "updates": {
       "fallbackToCacheTimeout": 0
     },
@@ -27,6 +22,9 @@
     },
     "androidStatusBar": {
       "backgroundColor": "#2ecc71"
+    },
+    "android": {
+      "package": "com.ivmelo.words"
     }
   }
 }
