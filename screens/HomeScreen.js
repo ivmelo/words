@@ -319,7 +319,10 @@ class HomeScreen extends React.Component {
         .then(entries => {
             this.setState({entries, refreshing: false});
         })
-        .catch(err => console.log(err));
+        .catch(err => {
+            console.log(err);
+            this.setState({refreshing: false});
+        });
     }
     
     /**

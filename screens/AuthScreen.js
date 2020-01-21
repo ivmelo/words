@@ -4,10 +4,11 @@ import {
     StyleSheet, 
     View, 
     TouchableOpacity,
-    Vibration
+    Vibration,
+    AsyncStorage
 } from 'react-native';
 import * as LocalAuthentication from 'expo-local-authentication';
-import { Ionicons, EvilIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import * as SecureStore from 'expo-secure-store';
 
 class HomeScreen extends React.Component {
@@ -15,6 +16,7 @@ class HomeScreen extends React.Component {
         mode: 'auth', // auth|create|update.
         step: 0,
         isAuthenticated: false,
+        fingerprintLock: false,
         message: '',
         secret: '0000000000', // 10 Chars is more than pinpad can take.
         pin: '',
@@ -31,31 +33,49 @@ class HomeScreen extends React.Component {
     async componentDidMount() {        
         let mode = this.props.navigation.getParam('mode', 'auth');
 
-        console.log(this.props.navigation.getParam('mode'));
-
-
-        console.log(mode);
-
-        
-        this.setState({
-            mode: 'mode'
-        });
+        this.setState({mode});
 
         if (mode === 'auth') {
             SecureStore.getItemAsync('access_pin').then((secret) => {
                 this.setState({secret});
+                AsyncStorage.getItem('auth_settings').then((data) => {
+                    if (data) {
+                        let auth_settings = JSON.parse(data);
+                        console.log(auth_settings.fingerprint_lock);
+
+
+                        this.setState({
+                            fingerprintLock: auth_settings.fingerprint_lock
+                        });
+
+                        if (auth_settings.fingerprint_lock) {
+                            // If fingerprints...
+                            this.authenticateWithFingerprint();
+                        } else {
+                            this.authenticateWithPin();
+                        }
+                    } else {
+                        this.authenticateWithPin();
+                    }
+                    console.log(auth_settings);
+                }).catch(err => {
+                    console.log(err);
+                });
             }).catch(err => {
                 // Error fetching access pin. 
                 // This should NEVER happen.
             });
-    
-            // If fingerprints...
-            this.authenticateWithFingerprint();
-            // If regular auth
-            // Set this.setState({message: 'Please enter your PIN'});
         } else if (mode === 'create') {
             this.createPin(1);
         }
+    }
+
+    authenticateWithPin() {
+        // If regular auth
+        this.setState({
+            message: 'Please enter your PIN',
+            actionKeyIcon: 'md-checkmark'
+        });
     }
 
     /**
@@ -64,6 +84,8 @@ class HomeScreen extends React.Component {
      * @param {int} step The current step in the creation process.
      */
     createPin(step = 1) {
+        console.log(step);
+
         if (step === 1) { // In step 1, the user creates a PIN.
             this.setState({
                 message: 'Create PIN (4-8 digits)',
@@ -144,14 +166,23 @@ class HomeScreen extends React.Component {
                         this.authenticateWithFingerprint();
                     }, 500);
                 } else {
-                    this.setState({message: 'Please enter your PIN'});
+                    this.setState({
+                        message: 'Please enter your PIN',
+                        icon: 'md-lock',
+                    });
                 }
             }).catch((error) => {
                 // Error when authing.
-                this.setState({message: 'Please enter your PIN'});
+                this.setState({
+                    message: 'Please enter your PIN',
+                    icon: 'md-lock',
+                });
             });
         })).catch((error) => {
-            this.setState({message: 'Please enter your PIN'});
+            this.setState({
+                message: 'Please enter your PIN',
+                icon: 'md-lock',
+            });
             // No hardware auth.
         });
     }
@@ -188,14 +219,26 @@ class HomeScreen extends React.Component {
         }
 
         Vibration.vibrate(4);
+
+
+
+
         let pin = this.state.pin;
 
         // AUth mode, reset pin if it reaches 8 chars.
-        if (this.state.mode === 'auth' && pin.length === 8) {
-            pin = '';
+        // if (this.state.mode === 'auth' && pin.length === 8) {
+        //     pin = '';
+        //     this.setState({
+        //         icon: 'md-lock',
+        //         message: '',
+        //     });
+        // }
+        
+
+        if (this.state.mode === 'auth') {
             this.setState({
-                icon: 'md-lock',
-                message: 'Please enter your PIN',
+                message: '',
+                icon: 'md-lock'
             });
         }
         
@@ -204,9 +247,10 @@ class HomeScreen extends React.Component {
                 pin = pin.slice(0, -1);
             }
         } else if (key === 'action') {
-            // Do nothing for now.
             if (this.state.mode === 'create') {
                 this.createPin(this.state.step + 1); // Advance to the next step.
+            } else if (this.state.mode === 'auth') {
+                this.checkPin();
             }
             return;
         } else {
@@ -216,18 +260,24 @@ class HomeScreen extends React.Component {
         }
 
         let hiddenPin = '●'.repeat(pin.length);
-        this.setState({pin, hiddenPin});
-
-        // Auth mode, check if pin is correct.
-        if (this.state.mode === 'auth') {
-            if (pin === this.state.secret) {
-                this.authenticated('pin');
-            } else if (pin.length === 8) {
-                this.setState({
-                    icon: 'md-lock',
-                    message: 'Incorrect PIN, please try again.',
-                });
+        this.setState({pin, hiddenPin}, () => {
+            // Auth mode, check if pin is correct.
+            if (this.state.mode === 'auth' && this.state.pin.length === this.state.secret.length) {
+                this.checkPin(pin);
             }
+        });
+    }
+    
+    checkPin() {
+        if (this.state.pin === this.state.secret) {
+            this.authenticated('pin');
+        } else {
+            this.setState({
+                icon: 'md-lock',
+                pin: '',
+                // hiddenPin: '',
+                message: 'Incorrect PIN, please try again.',
+            });
         }
     }
 

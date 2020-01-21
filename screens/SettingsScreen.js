@@ -6,6 +6,7 @@ import {
     Alert,
     ToastAndroid
 } from 'react-native';
+import { Notifications } from 'expo';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import * as DocumentPicker from 'expo-document-picker';
@@ -50,26 +51,21 @@ class SettingsScreen extends React.Component {
      * React Native LifeCycle. Called when component is mounted.
      */
     async componentDidMount() {
-        // AsyncStorage.getItem('auth_settings').then((data) => {
-        //     let auth_settings = JSON.parse(data);
-        //     if (auth_settings) {
-        //         this.setState({
-        //             pinLock: auth_settings.pin_lock,
-        //             fingerprintLock: auth_settings.fingerprint_lock
-        //         });
-        //     } else {
-        //         this.setState({
-        //             pinLock: false,
-        //             fingerprintLock: false
-        //         });
-        //     }
-        //     console.log(auth_settings);
-        // }).catch(err => {
-        //     console.log(err);
-        // });
         SecureStore.getItemAsync('access_pin').then((secret) => {
             if (secret) {
                 this.setState({pinLock: true});
+                AsyncStorage.getItem('auth_settings').then((data) => {
+                    console.log(data);
+                    let auth_settings = JSON.parse(data);
+                    if (auth_settings) {
+                        this.setState({
+                            fingerprintLock: auth_settings.fingerprint_lock
+                        });
+                    }
+                    console.log(auth_settings);
+                }).catch(err => {
+                    console.log(err);
+                });
             }
         }).catch(err => {
             // Error fetching access pin. 
@@ -86,9 +82,25 @@ class SettingsScreen extends React.Component {
     }
 
     /**
+     * Sets the state of fingerprint lock.
+     * 
+     * @param {boolean} status Status of fingerprint lock.
+     */
+    async setFingerprintLock(status) {
+        let auth_settings = JSON.stringify({fingerprint_lock: status});
+        await AsyncStorage.setItem('auth_settings', auth_settings);
+        this.setState({fingerprintLock: status});
+    }
+
+    /**
      * Removes all entries from the database.
      */
     async wipeEntries() {
+        if (global.IS_RESTORING_BACKUP) {
+            ToastAndroid.show('A backup is being restored in the background. Please wait.', ToastAndroid.SHORT);
+            return;
+        }
+
         // Works on both Android and iOS
         Alert.alert(
             'WARNING',
@@ -216,6 +228,11 @@ class SettingsScreen extends React.Component {
      * Generates a JSON file for backup and shares so the user can save wherever they want.
      */
     async backupEntries() {
+        if (global.IS_RESTORING_BACKUP) {
+            ToastAndroid.show('A backup is being restored in the background. Please wait.', ToastAndroid.SHORT);
+            return;
+        }
+
         this.setState({
             backupEntriesLabel: 'Creating backup file...'
         });
@@ -237,22 +254,45 @@ class SettingsScreen extends React.Component {
 
     async togglePin() {
         if (this.state.pinLock) {
-            console.log('remove pin');
+            Alert.alert(
+                'Warning',
+                'Are you sure you want to remove your PIN? If you remove your PIN you will also disable fingerprint authentication and leave the app unsecured.',
+                    [{ 
+                        text: 'Cancel', 
+                        style: 'cancel',
+                        onPress: () => {
+                            console.log('Cancelled [2]');
+                        } 
+                    },{
+                        text: 'Remove PIN',
+                        style: 'destructive',
+                        onPress: () => {
+                            SecureStore.deleteItemAsync('access_pin').then(() => {
+                                this.setState({
+                                    pinLock: false,
+                                    fingerprintLock: false
+                                });
+                            }).catch(err => {
+                                // Error creating access pin. 
+                                // This should NEVER happen.
+                                console.log('Error removing pin...');
+                            });
+                        },
+                    }],
+                {
+                    cancelable: true
+                }
+            );            
             
-            SecureStore.deleteItemAsync('access_pin').then(() => {
-                this.setState({
-                    pinLock: false,
-                    fingerprintLock: false
-                });
-            }).catch(err => {
-                // Error creating access pin. 
-                // This should NEVER happen.
-                console.log('Error removing pin...');
-            });
 
         } else {
             console.log('create pin');
-            this.props.navigation.navigate('AuthScreen');
+
+            this.props.navigation.navigate('AuthScreen', {
+                mode: 'create'
+            });
+
+            
         }
     }
 
@@ -274,12 +314,10 @@ class SettingsScreen extends React.Component {
                     thumbColor="#2ecc71" 
                     value={this.state.fingerprintLock} 
                     disabled={! this.state.pinLock}
-                    onValueChange={async (newValue) => {
-                    let set = JSON.stringify({auth_enabled: newValue});
-                    await AsyncStorage.setItem('auth_enabled', set);
-                    console.log(set);
-                    this.setState({fingerprintLock: newValue});
-                }}></FormSwitch>
+                    onValueChange={(newValue) => {
+                        this.setFingerprintLock(newValue);
+                    }}
+                ></FormSwitch>
 
                 
 
@@ -297,6 +335,23 @@ class SettingsScreen extends React.Component {
 
                 {/* <FormHeader title="Daily Reminder" subtitle="Setting a daily reminder will send you a notification every day at the defined time, so you never forget to write about your day."></FormHeader> */}
 
+                <FormHeader title="Daily Reminder" subtitle="This feature is under construction. Right now you can trigger a test notification."></FormHeader>
+
+                <FormButton
+                    label="Trigger test notification"
+                    onPress={() => {
+                        console.log('notifying...');
+
+                        Notifications.presentLocalNotificationAsync({
+                            title: 'Hello world!',
+                            body: 'How was your deh?'
+                        }).then(data => {
+                            console.log(data);
+                        }).catch(err => {
+                            console.log(err);
+                        });
+                    }}
+                ></FormButton>
 
                 <FormHeader title="Your Data" subtitle="You can use this section to backup your data or import a previous backup. Make sure you do this regularly in order to keep your entries safe. This is the only way of restoring your data in case your device is lost, broken or stolen."></FormHeader>
 
@@ -336,6 +391,10 @@ class SettingsScreen extends React.Component {
 
                 <FormHeader
                     subtitle="Words for Android is developed with ❤ in beautiful Kingston, Canada by I. Melo."
+                ></FormHeader>
+
+                <FormHeader
+                    subtitle="Mandando aqui um salve pro meu querido amigo Duarte, que tá testando o app neste momento. Abraço man."
                 ></FormHeader>
             </ScrollView>
         )

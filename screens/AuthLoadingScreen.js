@@ -2,10 +2,10 @@ import React from 'react';
 
 import {
     ActivityIndicator,
-    AsyncStorage,
     StatusBar,
     View,
 } from 'react-native';
+import * as SecureStore from 'expo-secure-store';
 
 class AuthLoadingScreen extends React.Component {
     componentDidMount() {
@@ -14,18 +14,17 @@ class AuthLoadingScreen extends React.Component {
 
     // Fetch the token from storage then navigate to our appropriate place
     _bootstrapAsync = async () => {
-        AsyncStorage.getItem('auth_settings').then((data) => {
-            let auth_settings = JSON.parse(data);
-            if (auth_settings) {
-                if (auth_settings.pin_lock) {
-                    // This will switch to the App screen or Auth screen and this loading
-                    // screen will be unmounted and thrown away.
-                    this.props.navigation.navigate('Auth');
-                }
+        SecureStore.getItemAsync('access_pin').then((secret) => {
+            // This will switch to the App screen or Auth screen and this loading
+            // screen will be unmounted and thrown away.
+            if (secret) {
+                this.props.navigation.navigate('Auth');
+            } else {
+                this.props.navigation.navigate('App');
             }
-            this.props.navigation.navigate('App');
         }).catch(err => {
-            this.props.navigation.navigate('App');
+            // Error fetching access pin. 
+            // This should NEVER happen.
         });
     };
 
