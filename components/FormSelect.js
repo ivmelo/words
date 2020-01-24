@@ -8,6 +8,7 @@ import {
     Modal, 
     TouchableOpacity, 
 } from 'react-native';
+import {AntDesign} from '@expo/vector-icons';
 import PropTypes from 'prop-types';
 import FormHeader from './FormHeader';
 
@@ -59,13 +60,16 @@ class FormSelect extends Component {
                     }}>
                     <View style={styles.outterModalView}>
                         <View style={styles.innerModalView}>
-                            <FormHeader title={this.props.label.toUpperCase()} borderTop={true}></FormHeader>
+                            {this.props.header && 
+                                <FormHeader title={this.props.header.toUpperCase()} borderTop={true}></FormHeader>
+                            }
                             <ScrollView>
                                 {this.props.items.map((item, index) => 
-                                    <TouchableOpacity key={index} onPress={() => this.optionSelected(item)}>
-                                        <View style={styles.itemBox}>
-                                            <Text style={styles.itemLabel}>{item.label}</Text>
-                                        </View>
+                                    <TouchableOpacity key={index} onPress={() => this.optionSelected(item)} style={styles.itemBox}>
+                                        <Text style={styles.itemLabel}>{item.label}</Text>
+                                        {this.props.value === index &&
+                                            <AntDesign name="check" size={25} style={{ color: '#333' }} />
+                                        }
                                     </TouchableOpacity>
                                 )}
                             </ScrollView>
@@ -89,6 +93,7 @@ class FormSelect extends Component {
 
 FormSelect.propTypes = {
     label: PropTypes.string,
+    header: PropTypes.string,
     placeholder: PropTypes.string,
     value: PropTypes.number,
     items: PropTypes.array.isRequired,
@@ -116,12 +121,13 @@ const styles = StyleSheet.create({
         backgroundColor: 'red',
         padding: 20,
     },
-
     itemBox: {
         paddingHorizontal: 15,
-        paddingVertical: 10,
+        paddingVertical: 12,
         borderBottomWidth: .3,
         borderColor: '#ddd',
+        flexDirection: 'row',
+        justifyContent: 'space-between'
     },
     itemLabel: {
         fontSize: 18,

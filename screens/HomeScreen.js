@@ -6,7 +6,6 @@ import {
     View, 
     RefreshControl, 
     TouchableOpacity, 
-    TouchableHighlight, 
     StatusBar, 
     Vibration, 
     Alert
@@ -67,43 +66,15 @@ class HomeScreen extends React.Component {
         }
     };
 
+    /**
+     * Refreshes content when page is focusing.
+     */
     didBlurSubscription = this.props.navigation.addListener(
         'willFocus',
         payload => {
             this.onRefresh();
         }
     );
-
-    /**
-     * Used to generate fake entries for testing with "lorem ipsum".
-     * 
-     * @param {Date} start The start
-     * @param {int} days The number of days
-     * @param {boolean} ovewrite If current entries should be overwritten.
-     */
-    async populateEntries(start = new Date(), days = 10, ovewrite = true) {
-        if (ovewrite) {
-            await Entry.destroyAll();
-        }
-
-        date = start;
-
-        for (let i = 0; i < days; i ++) {
-            let text = loremIpsum({
-                count: Math.floor(Math.random() * Math.floor(4)),
-                units: 'paragraphs'
-            });
-
-            // Create example entry.
-            let entry = new Entry();
-            entry.entry = text;
-            entry.date = date;
-            await entry.save();
-
-            // Increment 1 day.
-            date.setTime(date.getTime() + 1 * 86400000);
-        }
-    }
 
     /**
      * React Native LifeCycle. Called when component is mounted.
@@ -139,7 +110,6 @@ class HomeScreen extends React.Component {
      * Called when settings menu button is pressed.
      */
     onPressSettings = () => {
-        // this.setThemeColor(global.THEME_COLOR);
         this.props.navigation.navigate('SettingsScreen');
     }
 
@@ -147,7 +117,6 @@ class HomeScreen extends React.Component {
      * Called when floating add button is pressed.
      */
     onPressAdd = () => {
-        // this.setThemeColor(global.THEME_COLOR);
         this.props.navigation.navigate('EntryScreen', {
             year: this.state.year, 
             month: this.state.month,
@@ -161,7 +130,6 @@ class HomeScreen extends React.Component {
      * @param {string} color The theme color
      */
     setThemeColor(color) {
-        // this.setState({themeColor: color});
         this.props.navigation.setParams({themeColor: color});
     }
 
@@ -234,9 +202,6 @@ class HomeScreen extends React.Component {
         }
 
         this.updateTitle(monthNames[month - 1] + ' ' + year);
-
-        // Updates theme color when a month is selected.
-        // this.setThemeColor(color);
 
         // Only update if date has changed.
         if (year !== this.year && month - 1 !== this.month) {
@@ -346,7 +311,7 @@ class HomeScreen extends React.Component {
                 <TouchableOpacity 
                     style={[styles.floatingButton, {backgroundColor: this.state.themeColor}]}
                     onLongPress={() => {
-                    // this.setThemeColor('#000');
+                    Vibration.vibrate(5);
                 }} onPress={() => this.onPressAdd()} useForeground={true}>
                     <Ionicons name="ios-add" size={35} style={{color: '#fff'}}/>
                 </TouchableOpacity>
@@ -357,7 +322,6 @@ class HomeScreen extends React.Component {
                     visible={this.state.calendarModalVisible}
                     onRequestClose={() => {
                         this.setCalendarModalVisible(false);
-                        // Alert.alert('Modal has been closed.');
                     }}>
                     <View style={styles.outterModalView}>
                         <View style={styles.innerModalView}>

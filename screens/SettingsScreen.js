@@ -1,10 +1,9 @@
 import React from 'react';
 import {
     StyleSheet, 
-    AsyncStorage, 
     ScrollView, 
     Alert,
-    ToastAndroid
+    ToastAndroid,
 } from 'react-native';
 import { Notifications } from 'expo';
 import * as FileSystem from 'expo-file-system';
@@ -17,6 +16,15 @@ import FormHeader from '../components/FormHeader';
 import FormSwitch from '../components/FormSwitch';
 import FormSelect from '../components/FormSelect';
 import FormButton from '../components/FormButton';
+import Settings from '../classes/Settings';
+
+const reminderMessages = [
+    'How was your day?',
+    'Time to practice writing.',
+    'Keep your memories forever.',
+    'Keep track of your life.',
+    'Live today, remember tomorrow.',
+];
 
 
 /**
@@ -27,6 +35,7 @@ class SettingsScreen extends React.Component {
         name: '',
         pinLock: false,
         fingerprintLock: false,
+        dailyReminder: false,
         selectedItem: 1,
         restoreBackupLabel: 'Restore backup',
         backupEntriesLabel: 'Backup entries',
@@ -35,6 +44,50 @@ class SettingsScreen extends React.Component {
                 label: '#007cbc',
                 value: 1
             }
+        ],
+
+        selectedDailyReminderTime: 4,
+        availableDailyReminderTimes: [ // Array of colors for theming.
+            {
+                label: '5:00pm',
+                value: 1
+            },
+            {
+                label: '6:00pm',
+                value: 2
+            },
+            {
+                label: '7:00pm',
+                value: 3
+            },
+            {
+                label: '8:00pm',
+                value: 4
+            },
+            {
+                label: '9:00pm',
+                value: 5
+            },
+            {
+                label: '10:00pm',
+                value: 6
+            },
+            {
+                label: '11:00pm',
+                value: 7
+            },
+            {
+                label: '12:00am',
+                value: 8
+            },
+            {
+                label: '1:00am',
+                value: 9
+            },
+            {
+                label: '2:00am',
+                value: 10
+            },
         ]
     };
 
@@ -51,34 +104,17 @@ class SettingsScreen extends React.Component {
      * React Native LifeCycle. Called when component is mounted.
      */
     async componentDidMount() {
-        SecureStore.getItemAsync('access_pin').then((secret) => {
-            if (secret) {
-                this.setState({pinLock: true});
-                AsyncStorage.getItem('auth_settings').then((data) => {
-                    console.log(data);
-                    let auth_settings = JSON.parse(data);
-                    if (auth_settings) {
-                        this.setState({
-                            fingerprintLock: auth_settings.fingerprint_lock
-                        });
-                    }
-                    console.log(auth_settings);
-                }).catch(err => {
-                    console.log(err);
-                });
-            }
-        }).catch(err => {
-            // Error fetching access pin. 
-            // This should NEVER happen.
-        });
-    }
+        let pinLock = await Settings.secureGet('accessCode', false) ? true : false;
+        let fingerprintLock = await Settings.get('fingerprintLock', false);
+        let dailyReminder = await Settings.get('dailyReminder', false);
 
-    /**
-     * React Native LifeCycle. Called when component will unmount.
-     */
-    async componentWillUnmount() {
-        // TODO: Save settings...
-        console.log('Unmounting...');
+        console.log(dailyReminder);
+
+        this.setState({
+            pinLock, 
+            fingerprintLock,
+            dailyReminder
+        });
     }
 
     /**
@@ -87,9 +123,54 @@ class SettingsScreen extends React.Component {
      * @param {boolean} status Status of fingerprint lock.
      */
     async setFingerprintLock(status) {
-        let auth_settings = JSON.stringify({fingerprint_lock: status});
-        await AsyncStorage.setItem('auth_settings', auth_settings);
+        await Settings.set('fingerprintLock', status);
         this.setState({fingerprintLock: status});
+    }
+
+    /**
+     * Sets the state of fingerprint lock.
+     * 
+     * @param {boolean} status Status of fingerprint lock.
+     */
+    async setDailyReminderStatus(status) {
+        if (status) {
+            Notifications.scheduleLocalNotificationAsync(
+                {
+                    title: 'Hey you!',
+                    body: 'Don\'t forget to write a few Words in your journal.'
+                }, 
+                {
+                    time: (new Date()).getTime() + 30000, // 30 secs from now.
+                    repeat: 'minute'
+                }
+            ).then(data => {
+                console.log('scheduled');
+                console.log(data);
+            }).catch(err => {
+                console.log(err);
+            });
+
+        } else {
+            this.disableDailyReminders();
+        }
+        await Settings.set('dailyReminder', status);
+        this.setState({dailyReminder: status});
+    }
+
+    async setDailyReminderTime() {
+
+    }
+
+    /**
+     * Disable all daily reminders.
+     */
+    async disableDailyReminders() {
+        console.log('disabled');
+        try {
+            await Notifications.cancelAllScheduledNotificationsAsync();
+        } catch (error) {
+            console.log(error);
+        }
     }
 
     /**
@@ -296,79 +377,62 @@ class SettingsScreen extends React.Component {
         }
     }
 
+
     /**
      * React Native Render function.
      */
     render() {
         return (
             <ScrollView>
-                
                 <FormHeader title="Security" subtitle="You can secure your diary with a PIN or fingerprint. If you chose to do so, you will be propted to enter your PIN or fingerprints when opening the app."></FormHeader>
                 <FormButton
                     label={this.state.pinLock ? 'Remove access PIN' : 'Set access PIN'}
                     onPress={() => this.togglePin()}
                 ></FormButton>
-
                 <FormSwitch 
                     description="Fingerprint lock" 
                     thumbColor="#2ecc71" 
                     value={this.state.fingerprintLock} 
                     disabled={! this.state.pinLock}
-                    onValueChange={(newValue) => {
-                        this.setFingerprintLock(newValue);
+                    onValueChange={(status) => {
+                        this.setFingerprintLock(status);
                     }}
                 ></FormSwitch>
 
-                
-
-
-                {/* <FormHeader title="Appearance"></FormHeader>
-                <FormInput label="Preview Lines" keyboardType="number-pad"></FormInput>
-
-
-                <FormSelect label="demo" items={this.state.selectItems} value={this.state.selectedItem} onChangeValue={(v) => {
-                    this.setState({selectedItem: v});
-                    let color = this.state.selectItems[v];
-                    global.THEME_COLOR = color.label;
-                    // console.log();
-                }}></FormSelect> */}
-
-                {/* <FormHeader title="Daily Reminder" subtitle="Setting a daily reminder will send you a notification every day at the defined time, so you never forget to write about your day."></FormHeader> */}
-
                 <FormHeader title="Daily Reminder" subtitle="This feature is under construction. Right now you can trigger a test notification."></FormHeader>
 
-                <FormButton
-                    label="Trigger test notification"
-                    onPress={() => {
-                        console.log('notifying...');
+                <FormSwitch 
+                    description="Send daily reminder" 
+                    thumbColor="#2ecc71" 
+                    value={this.state.dailyReminder} 
+                    disabled={false}
+                    onValueChange={(status) => this.setDailyReminderStatus(status)}
+                ></FormSwitch>
 
-                        Notifications.presentLocalNotificationAsync({
-                            title: 'Hello world!',
-                            body: 'How was your deh?'
-                        }).then(data => {
-                            console.log(data);
-                        }).catch(err => {
-                            console.log(err);
-                        });
-                    }}
-                ></FormButton>
+                <FormSelect header="Notification Time" 
+                    items={this.state.availableDailyReminderTimes} 
+                    value={this.state.selectedDailyReminderTime} 
+                    onChangeValue={(value) => {
+                    this.setState({selectedDailyReminderTime: value});
+                    // let color = this.state.selectItems[v];
+                    // global.THEME_COLOR = color.label;
+                    // console.log();
+                }}></FormSelect>
+
 
                 <FormHeader title="Your Data" subtitle="You can use this section to backup your data or import a previous backup. Make sure you do this regularly in order to keep your entries safe. This is the only way of restoring your data in case your device is lost, broken or stolen."></FormHeader>
-
                 <FormButton
                     label={this.state.backupEntriesLabel}
                     onPress={() => {
                         this.backupEntries();
                     }}
                 ></FormButton>
-
                 <FormButton
                     label={this.state.restoreBackupLabel}
                     onPress={() => {
                         this.restoreBackup();
                     }}
                 ></FormButton>
-
                 <FormButton
                     label="Delete all entries"
                     onPress={() => {
@@ -391,10 +455,6 @@ class SettingsScreen extends React.Component {
 
                 <FormHeader
                     subtitle="Words for Android is developed with ❤ in beautiful Kingston, Canada by I. Melo."
-                ></FormHeader>
-
-                <FormHeader
-                    subtitle="Mandando aqui um salve pro meu querido amigo Duarte, que tá testando o app neste momento. Abraço man."
                 ></FormHeader>
             </ScrollView>
         )
