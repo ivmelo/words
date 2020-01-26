@@ -347,16 +347,11 @@ class SettingsScreen extends React.Component {
                     },{
                         text: 'Remove PIN',
                         style: 'destructive',
-                        onPress: () => {
-                            SecureStore.deleteItemAsync('access_pin').then(() => {
-                                this.setState({
-                                    pinLock: false,
-                                    fingerprintLock: false
-                                });
-                            }).catch(err => {
-                                // Error creating access pin. 
-                                // This should NEVER happen.
-                                console.log('Error removing pin...');
+                        onPress: async () => {
+                            await Settings.secureDelete('accessCode');
+                            this.setState({
+                                pinLock: false,
+                                fingerprintLock: false
                             });
                         },
                     }],

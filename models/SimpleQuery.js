@@ -44,6 +44,16 @@ class SimpleQuery {
     }
 
     /**
+     * The column to fetch distinct values from.
+     * 
+     * @param {String} column
+     */
+    distinct(column) {
+        this._columns = ['DISTINCT(' + column + ')'];
+        return this;
+    }
+
+    /**
      * The name of the table to be queried.
      * This method permits querying twin tables with the same object.
      * 
@@ -141,6 +151,14 @@ class SimpleQuery {
     get() {
         let query = this.getQuery();
         return this._model.get(query);
+    }
+
+    /**
+     * Runs the query and returns an array of raw results.
+     */
+    getArray() {
+        let query = this.getQuery();
+        return this._model.getArray(query);
     }
 }
 

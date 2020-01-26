@@ -6,14 +6,12 @@ import {
     TouchableOpacity,
     ScrollView,
     ToastAndroid,
-    Modal,
-    Text,
     Vibration,
 } from 'react-native';
 import {AntDesign} from '@expo/vector-icons';
 import FormInput from '../components/FormInput';
 import Entry from '../models/Entry';
-import {Calendar} from 'react-native-calendars';
+import CalendarModal from '../components/CalendarModal';
 
 /**
  * The Entry screen of the app. Used to add and edit entries.
@@ -26,7 +24,8 @@ class EntryScreen extends React.Component {
         isEditing: false,
         isCalendarVisible: false,
         entry: new Entry(),
-        markedDates: {}
+        markedDates: {},
+        markedDatesCache: {},
     }
 
     /**
@@ -93,20 +92,6 @@ class EntryScreen extends React.Component {
             }
         }
 
-        // Convert date to ISO 8006 date and set as markedDates index.
-        let markedDates = {};
-
-        let day = entry.date.getDate() < 10 ? '0' + String(entry.date.getDate()) : entry.date.getDate();
-        let month = (entry.date.getMonth() + 1) < 10 ? '0' + String(entry.date.getMonth() + 1) : (entry.date.getMonth() + 1);
-        let year = entry.date.getFullYear();
-        let isoDate = year + '-' + month + '-' + day;
-
-        // Sets date as marked in the calendar.
-        markedDates[isoDate] = {
-            selected: true, 
-            selectedColor: global.THEME_COLOR
-        };
-
         if (! entryId) {
             this.props.navigation.setParams({
                 isEditing: true
@@ -117,7 +102,6 @@ class EntryScreen extends React.Component {
         this.setState({
             entry, 
             isEditing: ! entryId,
-            markedDates
         });
     }
 
@@ -164,7 +148,7 @@ class EntryScreen extends React.Component {
      * Called when calendar is pressed.
      */
     onPressCalendar = () => {
-        this.setState({isCalendarVisible: ! this.state.isCalendarVisible})
+        this.setCalendarVisible(! this.state.isCalendarVisible);
     }
 
     /**
@@ -204,24 +188,27 @@ class EntryScreen extends React.Component {
      * @param {Date} date 
      */
     onChangeDate(day) {
-        // First mark date as selected in the calendar.
-        let markedDates = {};
+        let markedDates = JSON.parse(JSON.stringify(this.state.markedDatesCache));
 
-        markedDates[day.dateString] = {
-            selected: true, 
-            selectedColor: global.THEME_COLOR
-        };
+        if (typeof markedDates[day.dateString] !== 'undefined') {
+            markedDates[day.dateString]['selected'] = true;
+            markedDates[day.dateString]['selectedColor'] = global.THEME_COLOR;
+        } else {
+            markedDates[day.dateString] = {
+                selected: true,
+                selectedColor: global.THEME_COLOR
+            }
+        }
 
         // Create a new date object with the new date to replace the current one in entry.
         let date = new Date(day.year, day.month - 1, day.day);
+        let entry = this.state.entry;
+        entry.date = date;
 
-        this.setState(prevState => ({
-            entry: {
-                ...prevState.entry,
-                date: date,
-            },
+        this.setState({
+        //     entry,
             markedDates
-        }));
+        });
 
         this.setTitle(this.getWrittenDate(date));
     }
@@ -241,7 +228,61 @@ class EntryScreen extends React.Component {
      * @param {boolean} visible 
      */
     setCalendarVisible(visible) {
+        if (visible) {
+            this.updateCalendarMarkers();
+        }
+
         this.setState({isCalendarVisible: visible});
+    }
+
+    /**
+     * Updates markers in the calendar.
+     * In this app's context, it will mark every day with an entry in the calendar.
+     * 
+     * @param {Array} entries 
+     */
+    updateCalendarMarkers() {        
+        let entryDate = this.state.entry.getIsoDate();
+
+        Entry.q()
+        .distinct('date')
+        .getArray()
+        .then(entries => {
+            // Convert date to ISO 8006 date and set as markedDates index.
+            let markedDatesCache = {};
+
+            entries.forEach(entry => {
+                let date = new Date(entry.date);
+                let day = date.getDate() < 10 ? '0' + String(date.getDate()) : date.getDate();
+                let month = (date.getMonth() + 1) < 10 ? '0' + String(date.getMonth() + 1) : (date.getMonth() + 1);
+                let year = date.getFullYear();
+                let isoDate = year + '-' + month + '-' + day; // YYYY-MM-DD
+
+                markedDatesCache[isoDate] = {
+                    marked: true,
+                    activeOpacity: 0,
+                };
+            });
+
+            let markedDates = JSON.parse(JSON.stringify(markedDatesCache));
+            
+            if (typeof markedDates[entryDate] !== 'undefined') {
+                markedDates[entryDate]['selected'] = true;
+                markedDates[entryDate]['selectedColor'] = global.THEME_COLOR;
+            } else {
+                markedDates[entryDate] = {
+                    selected: true,
+                    selectedColor: global.THEME_COLOR
+                }
+            }
+
+            this.setState({
+                markedDates,
+                markedDatesCache
+            });
+        }).catch(err => {
+            console.log(err);
+        });
     }
 
     /**
@@ -292,32 +333,13 @@ class EntryScreen extends React.Component {
                     }))}
                 ></FormInput>
                 
-                <Modal
-                    animationType="fade"
-                    transparent={true}
+                <CalendarModal
                     visible={this.state.isCalendarVisible}
-                    onRequestClose={() => {
-                        this.setCalendarVisible(false);
-                    }}>
-                    <View style={styles.outterModalView}>
-                        <View style={styles.innerModalView}>
-                            <Calendar
-                                current={this.state.entry.date}
-                                markedDates={this.state.markedDates}
-                                onDayPress={(day) => this.onChangeDate(day)}
-                            />
-                            <TouchableOpacity
-                                onPress={() => 
-                                    this.setCalendarVisible(false)
-                                }
-                                style={[styles.calendarButtonBox, {backgroundColor: global.THEME_COLOR}]}
-                                activeOpacity={0.5}
-                            >
-                                <Text style={styles.calendarButtonText}>Done</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                </Modal>
+                    onRequestClose={() => this.setCalendarVisible(false)}
+                    current={this.state.entry.date}
+                    markedDates={this.state.markedDates}
+                    onDayPress={(day) => this.onChangeDate(day)}
+                ></CalendarModal>
             </ScrollView>
         )
     }
@@ -351,31 +373,6 @@ var styles = StyleSheet.create({
     marginRight5: {
         marginRight: 5
     },
-
-    outterModalView: {
-        flex: 1,
-        backgroundColor: '#00000080'
-    },
-    innerModalView: {
-        width: '100%',
-        backgroundColor: '#fff',
-        position: 'absolute',
-        bottom: 0,
-    },
-    calendarButtonBox: {
-        // backgroundColor: global.THEME_COLOR,
-        backgroundColor: 'red',
-        marginTop: 5,
-        marginHorizontal: 15,
-        marginBottom: 15,
-        borderRadius: 10,
-        padding: 10
-    },
-    calendarButtonText: {
-        color: '#fff', 
-        fontSize: 18,
-        textAlign: 'center'
-    }
 });
 
 export default EntryScreen;

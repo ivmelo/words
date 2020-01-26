@@ -93,7 +93,19 @@ class Settings {
         }
     }
 
-
+    /**
+     * Deletes an element from the SecureStore.
+     * 
+     * @param {String} key The key of the element to be deleted.
+     */
+    static async secureDelete(key) {
+        try {
+            await SecureStore.deleteItemAsync(key);
+            return true;
+        } catch (error) {
+            return false;
+        }
+    }
 }
 
 export default Settings;

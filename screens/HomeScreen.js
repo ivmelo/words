@@ -1,18 +1,17 @@
 import React from 'react';
 import {
     ScrollView, 
-    Modal, 
     StyleSheet, 
     View, 
     RefreshControl, 
     TouchableOpacity, 
     StatusBar, 
     Vibration, 
-    Alert
+    Alert,
 } from 'react-native';
 import { AntDesign, Ionicons } from '@expo/vector-icons';
 import EntryPreview from '../components/EntryPreview';
-import Calendar from '../components/Calendar';
+import CalendarModal from '../components/CalendarModal';
 import Entry from '../models/Entry';
 import Migrations from '../migrations/Migrations';
 
@@ -32,12 +31,8 @@ class HomeScreen extends React.Component {
         calendarModalVisible: false,
         year: new Date().getFullYear(), // Starts at current year and month.
         month: new Date().getMonth(),
-        monthEntriesCount: [
-            null, null, null, null, null, null,
-            null, null, null, null, null, null
-        ],
-        themeColor: global.THEME_COLOR, // Same as in App.js.
         numberOfLines: 5,
+        markedDates: {}
     }
 
     /**
@@ -125,12 +120,16 @@ class HomeScreen extends React.Component {
     }
 
     /**
-     * Sets hex color for to be used for theme (ex. #fafafa).
+     * Called when an entry is pressed.
      * 
-     * @param {string} color The theme color
+     * @param {int} entryId The entry ID of the pressed entry.
      */
-    setThemeColor(color) {
-        this.props.navigation.setParams({themeColor: color});
+    onPressEntry(entry) {
+        this.props.navigation.navigate('EntryScreen', {
+            entryId: entry.id,
+            entryDate: entry.date,
+            isEditing: false,
+        });
     }
 
     /**
@@ -145,33 +144,18 @@ class HomeScreen extends React.Component {
         Alert.alert(
             'Delete entry',
             'Are you sure you want to delete the selected entry?',
-            [
-                {
-                    text: 'Cancel',
-                    onPress: () => {},
-                    style: 'cancel',
-                },
-                {
-                    text: 'OK', onPress: () => this.deleteEntry(entryId)
-                },
-            ],
+            [{
+                text: 'Cancel',
+                onPress: () => {},
+                style: 'cancel',
+            },
+            {
+                text: 'OK', onPress: () => this.deleteEntry(entryId)
+            }],
             {
                 cancelable: true
             },
         );
-    }
-
-    /**
-     * Called when an entry is pressed.
-     * 
-     * @param {int} entryId The entry ID of the pressed entry.
-     */
-    onPressEntry(entry) {
-        this.props.navigation.navigate('EntryScreen', {
-            entryId: entry.id,
-            entryDate: entry.date,
-            isEditing: false,
-        });
     }
 
     /**
@@ -187,37 +171,17 @@ class HomeScreen extends React.Component {
     }
 
     /**
-     * Called when a month is selected in the month picker (a.k.a. calendar).
+     * Called when month changes in the calendar.
      * 
      * @param {int} year The selected year.
      * @param {int} month The selected month.
-     * @param {string} color The color of the selected month.
      */
-    dateSelected(year, month, color) {
-        Vibration.vibrate(4);
-
-        let yearChanged = false;
-        if (year != this.state.year) {
-            yearChanged = true;
-        }
-
-        this.updateTitle(monthNames[month - 1] + ' ' + year);
-
-        // Only update if date has changed.
-        if (year !== this.year && month - 1 !== this.month) {
-            this.setState({year: year, month: month - 1}, () => {
-                this.updateEntriesCountByMonth();
-                this.onRefresh();
-            });
-        }
-
-        if (! yearChanged) {
-            this.setCalendarModalVisible(false);
-        }
+    onMonthChange(year, month) {
+        this.setState({year: year, month: month - 1});
     }
 
     /**
-     * Updates the page title. Default: App Name. Usually: Current selected month.
+     * Updates the page title using the navigation prop. Default: App Name. Usually: Current selected month.
      * 
      * @param {string} title The string to be set as title of this page. 
      */
@@ -228,37 +192,7 @@ class HomeScreen extends React.Component {
     }
 
     /**
-     * Updates the entries by month count in the year/month selector (calendar).
-     */
-    async updateEntriesCountByMonth() {        
-        let entryCount = [];
-
-        // Set to and from dates.
-        let fromYear = this.state.year;
-        let toYear = this.state.year;
-
-        for (let m = 0; m < 12; m++) {
-            let fromMonth = m;
-            
-            let toMonth = fromMonth < 12 ? fromMonth + 1 : 0;
-            toYear = fromMonth < 12 ? toYear : toYear + 1;
-            
-            await Entry.q()
-            .where('date', '>=', new Date(fromYear, fromMonth, 1).getTime())
-            .where('date', '<', new Date(toYear, toMonth, 1).getTime())
-            .orderBy('date', 'desc')
-            .get()
-            .then(entries => {
-                entryCount.push(entries.length);
-            })
-            .catch(err => console.log(err));
-        }
-
-        this.setState({monthEntriesCount: entryCount});
-    }
-
-    /**
-     * Called when the user requests a refresh or when the app is first opened.
+     * Updates entries on the screen.
      */
     onRefresh() {
         this.setState({refreshing: true});
@@ -271,6 +205,7 @@ class HomeScreen extends React.Component {
         let toYear = this.state.year;
         let toMonth = this.state.month + 1;
 
+        // Handles december.
         if (fromMonth == 11) {
             toYear++;
             toMonth = 0;
@@ -289,14 +224,51 @@ class HomeScreen extends React.Component {
             this.setState({refreshing: false});
         });
     }
-    
+
+    /**
+     * Updates markers in the calendar.
+     * In this app's context, it will mark every day with an entry in the calendar.
+     * 
+     * @param {Array} entries 
+     */
+    updateCalendarMarkers() {        
+        Entry.q()
+        .distinct('date')
+        .getArray()
+        .then(entries => {
+            // Convert date to ISO 8006 date and set as markedDates index.
+            let markedDates = {};
+
+            entries.forEach(entry => {
+                let date = new Date(entry.date);
+                let day = date.getDate() < 10 ? '0' + String(date.getDate()) : date.getDate();
+                let month = (date.getMonth() + 1) < 10 ? '0' + String(date.getMonth() + 1) : (date.getMonth() + 1);
+                let year = date.getFullYear();
+                let isoDate = year + '-' + month + '-' + day; // YYYY-MM-DD
+
+                markedDates[isoDate] = {
+                    marked: true,
+                    activeOpacity: 0,
+                };
+            });
+
+            this.setState({markedDates});
+        }).catch(err => {
+            console.log(err);
+        });
+    }
+
     /**
      * Sets the visibility of the calendar (month/year picker).
      * 
      * @param {boolean} visible If the modal should be visible.
      */
     setCalendarModalVisible(visible) {
-        this.updateEntriesCountByMonth();
+        if (visible) {
+            this.updateCalendarMarkers();
+        } else {
+            this.onRefresh();
+        }
         this.setState({calendarModalVisible: visible});
     }
 
@@ -306,35 +278,24 @@ class HomeScreen extends React.Component {
     render() {
         return (
             <View style={styles.mainView}>
-                <StatusBar backgroundColor={this.state.themeColor} barStyle="light-content" />
+                <StatusBar backgroundColor={global.THEME_COLOR} barStyle="light-content" />
 
                 <TouchableOpacity 
-                    style={[styles.floatingButton, {backgroundColor: this.state.themeColor}]}
+                    style={[styles.floatingButton, {backgroundColor: global.THEME_COLOR}]}
                     onLongPress={() => {
                     Vibration.vibrate(5);
                 }} onPress={() => this.onPressAdd()} useForeground={true}>
                     <Ionicons name="ios-add" size={35} style={{color: '#fff'}}/>
                 </TouchableOpacity>
 
-                <Modal
-                    animationType="fade"
-                    transparent={true}
+                <CalendarModal
+                    onRequestClose={() => this.setCalendarModalVisible(false)}
                     visible={this.state.calendarModalVisible}
-                    onRequestClose={() => {
-                        this.setCalendarModalVisible(false);
-                    }}>
-                    <View style={styles.outterModalView}>
-                        <View style={styles.innerModalView}>
-                            <Calendar 
-                                onSelectDate={(year, month, color) => {this.dateSelected(year, month, color)}}
-                                year={this.state.year}
-                                month={this.state.month}
-                                monthEntries={this.state.monthEntriesCount}
-                                >
-                            </Calendar>
-                        </View>
-                    </View>
-                </Modal>
+                    current={new Date(this.state.year, this.state.month, 1)}
+                    markedDates={this.state.markedDates}
+                    onMonthChange={(newDate) => this.onMonthChange(newDate.year, newDate.month)}
+                    >
+                </CalendarModal>
 
                 <ScrollView
                     refreshControl={
@@ -394,21 +355,6 @@ var styles = StyleSheet.create({
         right: 20,
         elevation: 1,
     },
-
-    /** Modals */
-    outterModalView: {
-        flex: 1,
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: '#00000080'
-    },
-    innerModalView: {
-        width: '100%',
-        backgroundColor: '#fff',
-        position: 'absolute',
-        bottom: 0
-    }
 });
 
 export default HomeScreen;

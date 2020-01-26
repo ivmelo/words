@@ -212,6 +212,11 @@ export default class SimpleModel {
         return sq;
     };
 
+    /**
+     * Runs query and returns instantiated models based on results.
+     * 
+     * @param {Query} query 
+     */
     static async get(query) {
         let db = SQLite.openDatabase(this.databaseName() + '.sqlite');
 
@@ -226,6 +231,30 @@ export default class SimpleModel {
                             });
                         }
                         resolve(results);
+                    }, (error) => {
+                        reject(error);
+                    });
+
+            });
+        });
+    };
+
+    /**
+     * Runs query and returns an array of objects without instantiating the model.
+     * 
+     * @param {Query} query 
+     */
+    static async getArray(query) {
+        let db = SQLite.openDatabase(this.databaseName() + '.sqlite');
+
+        return new Promise((resolve, reject) => {
+            db.transaction(async (tx) => {
+                tx.executeSql(
+                    query, [], (tx, res) => {
+                        if (res.rows._array.length) {
+                            resolve(res.rows._array);
+                        }
+                        resolve([]);
                     }, (error) => {
                         reject(error);
                     });
