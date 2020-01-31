@@ -6,17 +6,17 @@ import {
     RefreshControl, 
     TouchableOpacity, 
     StatusBar, 
-    Vibration, 
     Alert,
 } from 'react-native';
-import { AntDesign, Ionicons } from '@expo/vector-icons';
+import { AntDesign, MaterialCommunityIcons, FontAwesome } from '@expo/vector-icons';
 import EntryPreview from '../components/EntryPreview';
 import CalendarModal from '../components/CalendarModal';
 import Entry from '../models/Entry';
 import Migrations from '../migrations/Migrations';
+import Settings from '../classes/Settings';
 
 // TODO: Properly import this.
-var loremIpsum = require('lorem-ipsum-react-native');
+// var loremIpsum = require('lorem-ipsum-react-native');
 
 /**
  * The home and "Main" screen of the app.
@@ -29,6 +29,7 @@ class HomeScreen extends React.Component {
         entries: [],
         refreshing: false,
         calendarModalVisible: false,
+        sortEntriesOrder: 'desc',
         year: new Date().getFullYear(), // Starts at current year and month.
         month: new Date().getMonth(),
         numberOfLines: 5,
@@ -52,11 +53,18 @@ class HomeScreen extends React.Component {
                 </TouchableOpacity>
             ),
             headerRight: (
-                <TouchableOpacity onPress={navigation.getParam('onPressCalendar')}>
-                    <View style={{marginRight: 10, width: 40, height: 40, flex: 1, alignItems: 'center', justifyContent: 'center'}}>
-                        <AntDesign name="calendar" size={25} style={{color: '#fff'}}/>
-                    </View>
-                </TouchableOpacity>
+                <View style={{flexDirection: 'row'}}>
+                    <TouchableOpacity onPress={navigation.getParam('onPressSort')}>
+                        <View style={{marginRight: 5, width: 40, height: 40, alignItems: 'center', justifyContent: 'center'}}>
+                            <MaterialCommunityIcons name={navigation.getParam('sortIcon', 'sort-descending')} size={28} style={{color: '#fff'}}/>
+                        </View>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={navigation.getParam('onPressCalendar')}>
+                        <View style={{marginRight: 10, width: 40, height: 40, alignItems: 'center', justifyContent: 'center'}}>
+                            <AntDesign name="calendar" size={25} style={{color: '#fff'}}/>
+                        </View>
+                    </TouchableOpacity>
+                </View>
             )
         }
     };
@@ -67,7 +75,9 @@ class HomeScreen extends React.Component {
     didBlurSubscription = this.props.navigation.addListener(
         'willFocus',
         payload => {
-            this.onRefresh();
+            if (this.state.sortEntriesOrder) {
+                this.onRefresh();
+            }
         }
     );
 
@@ -75,10 +85,18 @@ class HomeScreen extends React.Component {
      * React Native LifeCycle. Called when component is mounted.
      */
     async componentDidMount() {
+        let sortEntriesOrder = await Settings.get('sortEntriesOrder', 'desc');
+
+        this.setState({
+            sortEntriesOrder: sortEntriesOrder,
+        });
+
         this.props.navigation.setParams({
             onPressAdd: this.onPressAdd,
             onPressSettings: this.onPressSettings,
             onPressCalendar: this.onPressCalendar,
+            onPressSort: this.onPressSort,
+            sortIcon: sortEntriesOrder == 'asc' ? 'sort-ascending' : 'sort-descending'
         });
 
         // -> Uncomment this line to wipe all databases and start from scratch.
@@ -92,6 +110,28 @@ class HomeScreen extends React.Component {
 
         // -> Update the entries counter in the calendar component.
         // await this.updateEntriesCountByMonth();
+
+        // Fetch data and display it for the first time.
+        this.onRefresh();
+    }
+
+    /**
+     * Changes the sorting method of entry dates. ascending|descending
+     */
+    onPressSort = () => {
+        let newOrder = this.state.sortEntriesOrder == 'desc' ? 'asc' : 'desc';
+
+        this.setState({
+            sortEntriesOrder: newOrder
+        }, async () => {
+            this.props.navigation.setParams({
+                sortIcon: 'sort-' + newOrder + 'ending' // ascending | descending.
+            });
+
+            this.onRefresh();
+
+            await Settings.set('sortEntriesOrder', newOrder); // Store in settings.
+        });
     }
 
     /**
@@ -138,8 +178,6 @@ class HomeScreen extends React.Component {
      * @param {int} entryId The entry ID of the pressed element.
      */
     onHoldEntry(entryId) {
-        Vibration.vibrate(4);
-
         // Displays alert to confirm the deletion of the entry.
         Alert.alert(
             'Delete entry',
@@ -212,17 +250,17 @@ class HomeScreen extends React.Component {
         }
 
         Entry.q()
-        .where('date', '>=', new Date(fromYear, fromMonth, 1).getTime())
-        .where('date', '<', new Date(toYear, toMonth, 1).getTime())
-        .orderBy('date', 'desc')
-        .get()
-        .then(entries => {
-            this.setState({entries, refreshing: false});
-        })
-        .catch(err => {
-            console.log(err);
-            this.setState({refreshing: false});
-        });
+            .where('date', '>=', new Date(fromYear, fromMonth, 1).getTime())
+            .where('date', '<', new Date(toYear, toMonth, 1).getTime())
+            .orderBy('date', this.state.sortEntriesOrder)
+            .get()
+            .then(entries => {
+                this.setState({entries, refreshing: false});
+            })
+            .catch(err => {
+                console.log(err);
+                this.setState({refreshing: false});
+            });
     }
 
     /**
@@ -283,9 +321,8 @@ class HomeScreen extends React.Component {
                 <TouchableOpacity 
                     style={[styles.floatingButton, {backgroundColor: global.THEME_COLOR}]}
                     onLongPress={() => {
-                    Vibration.vibrate(5);
                 }} onPress={() => this.onPressAdd()} useForeground={true}>
-                    <Ionicons name="ios-add" size={35} style={{color: '#fff'}}/>
+                    <AntDesign name="plus" size={30} style={{color: '#fff'}}/>
                 </TouchableOpacity>
 
                 <CalendarModal

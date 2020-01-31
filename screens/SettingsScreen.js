@@ -30,9 +30,9 @@ class SettingsScreen extends React.Component {
         dailyReminder: false,
         isPickingTime: false,
         dailyReminderTime: {
-            hour: 0,
+            hour: 9,
             minute: 0,
-            ampm: 'AM'
+            ampm: 'PM'
         },
 
         // Backups.
@@ -155,7 +155,8 @@ class SettingsScreen extends React.Component {
 
         let notificationSchedule = {
             time: notificationTime,
-            repeat: 'minute' // TODO change to every day.
+            // repeat: 'minute', // For testing... (minute, hour, day, week, month, year)
+            repeat: 'day'
         };
 
         try {
@@ -368,6 +369,7 @@ class SettingsScreen extends React.Component {
                         style: 'destructive',
                         onPress: async () => {
                             await Settings.secureDelete('accessCode');
+                            await Settings.remove('fingerprintLock');
                             this.setState({
                                 pinLock: false,
                                 fingerprintLock: false
@@ -398,7 +400,10 @@ class SettingsScreen extends React.Component {
     render() {
         return (
             <ScrollView>
-                <FormHeader title="Security" subtitle="You can secure your diary with a PIN or fingerprint. If you chose to do so, you will be propted to enter your PIN or fingerprints when opening the app."></FormHeader>
+                <FormHeader 
+                    title="Security" 
+                    subtitle="Protect your journal with a PIN (Personal Access Code) or fingerprints. You will be prompted to use your PIN or fingerprints every time you open the app.">
+                </FormHeader>
                 <FormButton
                     label={this.state.pinLock ? 'Remove access PIN' : 'Set access PIN'}
                     onPress={() => this.togglePin()}
@@ -413,8 +418,10 @@ class SettingsScreen extends React.Component {
                     }}
                 ></FormSwitch>
 
-                <FormHeader title="Daily Reminder" subtitle="You can receive a daily notification so you don't forget to write in your journal."></FormHeader>
-
+                <FormHeader 
+                    title="Daily Reminder"
+                    subtitle="You can receive a daily notification so you don't forget to write in your journal.">
+                </FormHeader>
                 <FormSwitch 
                     description="Enable daily reminder" 
                     thumbColor="#2ecc71" 
@@ -422,7 +429,6 @@ class SettingsScreen extends React.Component {
                     disabled={false}
                     onValueChange={(status) => this.setDailyReminderStatus(status)}
                 ></FormSwitch>
-
                 <FormButton
                     label={'Send notification at ' + this.state.dailyReminderTime.hour + ':' + (this.state.dailyReminderTime.minute < 10 ? '0' + this.state.dailyReminderTime.minute : this.state.dailyReminderTime.minute) + this.state.dailyReminderTime.ampm}
                     onPress={() => {
@@ -441,7 +447,10 @@ class SettingsScreen extends React.Component {
                 >
                 </SimpleTimePicker>
 
-                <FormHeader title="Your Data" subtitle="You can use this section to backup your data or import a previous backup. Make sure you do this regularly in order to keep your entries safe. This is the only way of restoring your data in case your device is lost, broken or stolen."></FormHeader>
+                <FormHeader 
+                    title="App Data" 
+                    subtitle="It's recommended to backup your journal regularly in order to keep your entries safe. This is the only way of recovering your entries in case your device is lost, broken or stolen. Make sure you keep your backups in a safe place such as a cloud storage service.">
+                </FormHeader>
                 <FormButton
                     label={this.state.backupEntriesLabel}
                     onPress={() => {
@@ -461,7 +470,10 @@ class SettingsScreen extends React.Component {
                     }}
                 ></FormButton>
 
-                <FormHeader title="Feedback and Support"></FormHeader>
+                <FormHeader 
+                    title="Feedback and Support"
+                    subtitle="If you have any questions, feedback or need help, please get in touch and we'll get back to you as soon as possible. Feature requests are welcome."
+                ></FormHeader>
                 <FormButton
                     label="Contact the developer"
                     onPress={() => {
@@ -475,7 +487,7 @@ class SettingsScreen extends React.Component {
                 ></FormButton>
 
                 <FormHeader
-                    subtitle="Words for Android is developed with ❤ in beautiful Kingston, Canada by I. Melo."
+                    subtitle="Words for Android is developed with <3 in beautiful Kingston, Canada by I. Melo. [v0.1.0, January 2020]"
                 ></FormHeader>
             </ScrollView>
         )

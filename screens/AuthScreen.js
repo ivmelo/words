@@ -4,7 +4,6 @@ import {
     StyleSheet, 
     View, 
     TouchableOpacity,
-    Vibration,
 } from 'react-native';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { Ionicons } from '@expo/vector-icons';
@@ -92,15 +91,27 @@ class AuthScreen extends React.Component {
                 step: 1
             });
         } if (step === 2) { // In step 2, the user confirms the PIN.
-            this.setState({
-                message: 'Confirm PIN',
-                actionKeyIcon: 'md-checkmark',
-                icon: 'md-key',
-                pin: '',
-                hiddenPin: '',
-                confirmPin: this.state.pin,
-                step: 2
-            });
+            if (this.state.pin.length < 4) {
+                this.setState({
+                    message: 'Too short. Create PIN (4-8 digits)',
+                    actionKeyIcon: 'md-checkmark',
+                    icon: 'md-key',
+                    pin: '',
+                    hiddenPin: '',
+                    step: 1
+                });
+            } else {
+                this.setState({
+                    message: 'Confirm PIN',
+                    actionKeyIcon: 'md-checkmark',
+                    icon: 'md-key',
+                    pin: '',
+                    hiddenPin: '',
+                    confirmPin: this.state.pin,
+                    step: 2
+                });
+            }
+            
         } if (step === 3) { // In step 3, the system confirms the PIN, saves and redirects.
             if (this.state.pin === this.state.confirmPin) {
                 // Success.
@@ -198,8 +209,6 @@ class AuthScreen extends React.Component {
             return;
         }
 
-        Vibration.vibrate(4); // Haptic feedback.
-
         // Fetches previous PIN for manipulation.
         let pin = this.state.pin;
 
@@ -260,7 +269,6 @@ class AuthScreen extends React.Component {
      * Clears the PIN input field.
      */
     clearPin() {
-        Vibration.vibrate(4);
         this.setState({pin: '', hiddenPin: ''});
     }
 

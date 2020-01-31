@@ -9,7 +9,7 @@ class AuthLoadingScreen extends React.Component {
 
     // Fetch the token from storage then navigate to our appropriate place
     _bootstrapAsync = async () => {
-        let authEnabled = Settings.secureGet('accessCode', false) ? true : false
+        let authEnabled = await Settings.secureGet('accessCode', false) ? true : false
 
         if (authEnabled) {
             this.props.navigation.navigate('Auth');

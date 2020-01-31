@@ -6,7 +6,6 @@ import {
     TouchableOpacity,
     ScrollView,
     ToastAndroid,
-    Vibration,
 } from 'react-native';
 import {AntDesign} from '@expo/vector-icons';
 import FormInput from '../components/FormInput';
@@ -155,9 +154,6 @@ class EntryScreen extends React.Component {
      * Called when the delete button is pressed.
      */
     onPressDelete = () => {
-        // console.log('deletePressed');
-        Vibration.vibrate(4);
-
         // Displays alert to confirm the deletion of the entry.
         Alert.alert(
             'Delete entry',

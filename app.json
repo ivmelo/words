@@ -8,9 +8,14 @@
       "ios",
       "android"
     ],
-    "version": "0.0.1",
+    "version": "0.1.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#2ecc71"
+    },
     "updates": {
       "fallbackToCacheTimeout": 0
     },
@@ -24,7 +29,8 @@
       "backgroundColor": "#2ecc71"
     },
     "android": {
-      "package": "com.ivmelo.words"
+      "package": "com.ivmelo.words",
+      "permissions": []
     }
   }
 }
