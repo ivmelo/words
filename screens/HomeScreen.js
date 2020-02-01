@@ -1,7 +1,6 @@
 import React from 'react';
 import {
     ScrollView, 
-    StyleSheet, 
     View, 
     RefreshControl, 
     TouchableOpacity, 
@@ -14,9 +13,7 @@ import CalendarModal from '../components/CalendarModal';
 import Entry from '../models/Entry';
 import Migrations from '../migrations/Migrations';
 import Settings from '../classes/Settings';
-
-// TODO: Properly import this.
-// var loremIpsum = require('lorem-ipsum-react-native');
+import Styles from '../styles/style';
 
 /**
  * The home and "Main" screen of the app.
@@ -29,7 +26,7 @@ class HomeScreen extends React.Component {
         entries: [],
         refreshing: false,
         calendarModalVisible: false,
-        sortEntriesOrder: 'desc',
+        sortEntriesOrder: null,
         year: new Date().getFullYear(), // Starts at current year and month.
         month: new Date().getMonth(),
         numberOfLines: 5,
@@ -47,22 +44,16 @@ class HomeScreen extends React.Component {
             },
             headerLeft: (
                 <TouchableOpacity onPress={navigation.getParam('onPressSettings')}>
-                    <View style={{marginLeft: 10, width: 40, height: 40, flex: 1, alignItems: 'center', justifyContent: 'center'}}>
-                        <AntDesign name="setting" size={25} style={{color: '#fff'}}/>
-                    </View>
+                    <AntDesign name="setting" style={[Styles.navbarIcon, Styles.marginLeftLg]}/>
                 </TouchableOpacity>
             ),
             headerRight: (
-                <View style={{flexDirection: 'row'}}>
+                <View style={Styles.flexDirectionRow}>
                     <TouchableOpacity onPress={navigation.getParam('onPressSort')}>
-                        <View style={{marginRight: 5, width: 40, height: 40, alignItems: 'center', justifyContent: 'center'}}>
-                            <MaterialCommunityIcons name={navigation.getParam('sortIcon', 'sort-descending')} size={28} style={{color: '#fff'}}/>
-                        </View>
+                        <MaterialCommunityIcons name={navigation.getParam('sortIcon', 'sort-descending')} style={[Styles.navbarIcon, Styles.marginRightLg]}/>
                     </TouchableOpacity>
                     <TouchableOpacity onPress={navigation.getParam('onPressCalendar')}>
-                        <View style={{marginRight: 10, width: 40, height: 40, alignItems: 'center', justifyContent: 'center'}}>
-                            <AntDesign name="calendar" size={25} style={{color: '#fff'}}/>
-                        </View>
+                        <AntDesign name="calendar" style={[Styles.navbarIcon, Styles.marginRightLg]}/>
                     </TouchableOpacity>
                 </View>
             )
@@ -129,7 +120,6 @@ class HomeScreen extends React.Component {
             });
 
             this.onRefresh();
-
             await Settings.set('sortEntriesOrder', newOrder); // Store in settings.
         });
     }
@@ -315,14 +305,13 @@ class HomeScreen extends React.Component {
      */
     render() {
         return (
-            <View style={styles.mainView}>
-                <StatusBar backgroundColor={global.THEME_COLOR} barStyle="light-content" />
+            <View>
+                <StatusBar backgroundColor={global.THEME_COLOR} barStyle="light-content"/>
 
                 <TouchableOpacity 
-                    style={[styles.floatingButton, {backgroundColor: global.THEME_COLOR}]}
-                    onLongPress={() => {
-                }} onPress={() => this.onPressAdd()} useForeground={true}>
-                    <AntDesign name="plus" size={30} style={{color: '#fff'}}/>
+                    style={[Styles.floatingButton, {backgroundColor: global.THEME_COLOR}]}
+                    onPress={() => this.onPressAdd()} useForeground={true}>
+                    <AntDesign name="plus" style={Styles.floatingButtonIcon}/>
                 </TouchableOpacity>
 
                 <CalendarModal
@@ -331,8 +320,7 @@ class HomeScreen extends React.Component {
                     current={new Date(this.state.year, this.state.month, 1)}
                     markedDates={this.state.markedDates}
                     onMonthChange={(newDate) => this.onMonthChange(newDate.year, newDate.month)}
-                    >
-                </CalendarModal>
+                ></CalendarModal>
 
                 <ScrollView
                     refreshControl={
@@ -369,29 +357,5 @@ const monthNames = [
     'July', 'August', 'September',
     'October', 'November', 'December'
 ];
-
-/**
- * The stylesheet of this page.
- */
-var styles = StyleSheet.create({
-    mainView: {
-        flex: 1,
-        backgroundColor: '#f9f9f9',
-    },
-    floatingButton: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        zIndex: 999,
-        width: 50,
-        height: 50,
-        borderRadius: 50,
-        backgroundColor: global.THEME_COLOR,
-        position: 'absolute',
-        bottom: 20,                                                   
-        right: 20,
-        elevation: 1,
-    },
-});
 
 export default HomeScreen;

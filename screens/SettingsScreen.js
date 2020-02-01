@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-    StyleSheet, 
     ScrollView, 
     Alert,
     ToastAndroid,
@@ -493,9 +492,5 @@ class SettingsScreen extends React.Component {
         )
     }
 }
-
-var styles = StyleSheet.create({
-    // Add styles here.
-});
 
 export default SettingsScreen;

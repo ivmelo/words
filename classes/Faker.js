@@ -1,5 +1,8 @@
 import '../models/Entry';
 
+// TODO: Properly import this.
+// var loremIpsum = require('lorem-ipsum-react-native');
+
 class Faker {
     /**
      * Used to generate fake entries for testing with "lorem ipsum".

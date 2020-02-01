@@ -1,7 +1,6 @@
 import React from 'react';
 import {
     View,
-    StyleSheet,
     Alert,
     TouchableOpacity,
     ScrollView,
@@ -11,6 +10,7 @@ import {AntDesign} from '@expo/vector-icons';
 import FormInput from '../components/FormInput';
 import Entry from '../models/Entry';
 import CalendarModal from '../components/CalendarModal';
+import Styles from '../styles/style';
 
 /**
  * The Entry screen of the app. Used to add and edit entries.
@@ -37,21 +37,21 @@ class EntryScreen extends React.Component {
                 <View>
                     {navigation.getParam('isEditing') ? // Initial value comes from HomeScreen.js. Will only be true when creating a new entry. When viewing an entry, editing will be disabled until user presses edit button.
                         (
-                            <View style={{ display: 'flex', flexDirection: 'row' }}>
-                                <TouchableOpacity onPress={navigation.getParam('onPressCalendar')} style={[styles.rightMenuIcon, styles.marginRight5]}>
-                                    <AntDesign name="calendar" size={25} style={{ color: '#fff' }} />
+                            <View style={Styles.flexDirectionRow}>
+                                <TouchableOpacity onPress={navigation.getParam('onPressCalendar')}>
+                                    <AntDesign name="calendar" style={[Styles.navbarIcon, Styles.marginRightLg]}/>
                                 </TouchableOpacity>
-                                <TouchableOpacity onPress={navigation.getParam('onPressSave')} style={styles.rightMenuIcon}>
-                                    <AntDesign name="check" size={25} style={{ color: '#fff' }} />
+                                <TouchableOpacity onPress={navigation.getParam('onPressSave')}>
+                                    <AntDesign name="check" style={[Styles.navbarIcon, Styles.marginRightLg]}/>
                                 </TouchableOpacity>
                             </View>
                             ) : (
                             <View style={{ display: 'flex', flexDirection: 'row' }}>
-                                <TouchableOpacity onPress={navigation.getParam('onPressDelete')} style={[styles.rightMenuIcon, styles.marginRight5]}>
-                                    <AntDesign name="delete" size={25} style={{ color: '#fff' }} />
+                                <TouchableOpacity onPress={navigation.getParam('onPressDelete')}>
+                                    <AntDesign name="delete" style={[Styles.navbarIcon, Styles.marginRightLg]}/>
                                 </TouchableOpacity>
-                                <TouchableOpacity onPress={navigation.getParam('onPressEdit')} style={styles.rightMenuIcon}>
-                                    <AntDesign name="edit" size={25} style={{ color: '#fff' }} />
+                                <TouchableOpacity onPress={navigation.getParam('onPressEdit')}>
+                                    <AntDesign name="edit" style={[Styles.navbarIcon, Styles.marginRightLg]}/>
                                 </TouchableOpacity>
                             </View>
                         )
@@ -311,14 +311,12 @@ class EntryScreen extends React.Component {
      */
     render() {
         return (
-            <ScrollView style={styles.mainView}>
+            <ScrollView style={Styles.appBackground}>
                 <FormInput
                     value={this.state.entry.entry}
                     multiline={true}
-                    style={{ backgroundColor: '#afafaf' }}
                     numberOfLines={10}
                     editable={this.state.isEditing}
-                    textInputStyle={styles.textInputStyle}
                     // autoFocus={true} // Focus input on componentDidMount.
                     placeholder="How was your day?" // TODO: Translate this.
                     onChangeText={(text) => this.setState(prevState => ({
@@ -350,25 +348,5 @@ const monthNames = [
     'Jul', 'Aug', 'Sep',
     'Oct', 'Nov', 'Dec'
 ];
-
-/**
- * The stylesheet of this page.
- */
-var styles = StyleSheet.create({
-    mainView: {
-        flex: 1,
-        backgroundColor: '#f9f9f9',
-    },
-    textInputStyle: {
-        textAlignVertical: 'top',
-        textAlign: 'left'
-    },
-    rightMenuIcon: {
-        marginRight: 10, width: 40, height: 40, flex: 1, alignItems: 'center', justifyContent: 'center'
-    },
-    marginRight5: {
-        marginRight: 5
-    },
-});
 
 export default EntryScreen;

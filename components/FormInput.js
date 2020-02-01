@@ -18,7 +18,7 @@ class FormInput extends Component {
                 {this.props.label && 
                     <Text style={styles.textInputLabel}>{this.props.label.toUpperCase()}</Text>
                 }
-                <TextInput {...this.props} style={[styles.textInput, this.props.textInputStyle]}></TextInput>
+                <TextInput {...this.props} style={[styles.textInput]}></TextInput>
             </View>
         );
     }
@@ -50,7 +50,9 @@ const styles = StyleSheet.create({
     },
     textInput: {
         fontSize: 18,
-        color: '#333'
+        color: '#333',
+        textAlignVertical: 'top',
+        textAlign: 'left'
     }
 });
 
