@@ -305,7 +305,7 @@ class HomeScreen extends React.Component {
      */
     render() {
         return (
-            <View>
+            <View style={Styles.appBackground}>
                 <StatusBar backgroundColor={global.THEME_COLOR} barStyle="light-content"/>
 
                 <TouchableOpacity 

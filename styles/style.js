@@ -13,7 +13,6 @@ export default StyleSheet.create({
 
     /** Floating Button **/
     floatingButton: {
-        flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
         zIndex: 999,
@@ -51,6 +50,7 @@ export default StyleSheet.create({
 
     /** Background **/
     appBackground: {
+        flex: 1,
         backgroundColor: '#f9f9f9',
     }
 });

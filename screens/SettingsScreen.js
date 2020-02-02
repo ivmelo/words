@@ -15,6 +15,7 @@ import FormSwitch from '../components/FormSwitch';
 import FormButton from '../components/FormButton';
 import Settings from '../classes/Settings';
 import SimpleTimePicker from '../components/SimpleTimePicker';
+import Constants from 'expo-constants';
 
 /**
  * The Settings screen of the app. Used to add and edit entries.
@@ -486,7 +487,8 @@ class SettingsScreen extends React.Component {
                 ></FormButton>
 
                 <FormHeader
-                    subtitle="Words for Android is developed with <3 in beautiful Kingston, Canada by I. Melo. [v0.1.0, January 2020]"
+                    subtitle={'Words for Android is developed with <3 in beautiful Kingston, Canada by I. Melo. [v' + Constants.manifest.version + '] '}
+                    center={true}
                 ></FormHeader>
             </ScrollView>
         )

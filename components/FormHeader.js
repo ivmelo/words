@@ -17,7 +17,7 @@ class FormHeader extends Component {
                     <Text style={styles.headerTitle}>{this.props.title.toUpperCase()}</Text>
                 }
                 {this.props.subtitle &&
-                    <Text style={styles.headerSubtitle}>{this.props.subtitle}</Text>
+                    <Text style={[styles.headerSubtitle, this.props.center ? styles.textCenter : {}]}>{this.props.subtitle}</Text>
                 }
             </View>
         );
@@ -51,6 +51,9 @@ const styles = StyleSheet.create({
         marginTop: 5,
         fontSize: 14,
         color: '#9e9e9e',
+    },
+    textCenter: {
+        textAlign: 'center'
     }
 });
 
