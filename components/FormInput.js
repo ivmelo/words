@@ -18,7 +18,11 @@ class FormInput extends Component {
                 {this.props.label && 
                     <Text style={styles.textInputLabel}>{this.props.label.toUpperCase()}</Text>
                 }
-                <TextInput {...this.props} style={[styles.textInput]}></TextInput>
+                <TextInput {...this.props} style={[styles.textInput]} ref={(component) => {
+                    if (typeof this.props.onRef !== 'undefined') {
+                        this.props.onRef(component);
+                    }
+                }}></TextInput>
             </View>
         );
     }
@@ -30,6 +34,7 @@ class FormInput extends Component {
 FormInput.propTypes = {
     label: PropTypes.string,
     placeholder: PropTypes.string,
+    onRef: PropTypes.func
 };
 
 /**

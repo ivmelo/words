@@ -5,6 +5,7 @@ import {
     TouchableOpacity,
     ScrollView,
     ToastAndroid,
+    KeyboardAvoidingView
 } from 'react-native';
 import {AntDesign} from '@expo/vector-icons';
 import FormInput from '../components/FormInput';
@@ -26,6 +27,9 @@ class EntryScreen extends React.Component {
         markedDates: {},
         markedDatesCache: {},
     }
+
+    _formInput = null;
+    _scrollView = null;
 
     /**
      * Defines the navigation options of this screen including header title, color, buttons, etc...
@@ -101,6 +105,11 @@ class EntryScreen extends React.Component {
         this.setState({
             entry, 
             isEditing: ! entryId,
+        }, () => {
+            if (! entryId) {
+                // If creating a new entry, focus on text input.
+                this._formInput.focus();
+            }
         });
     }
 
@@ -140,7 +149,15 @@ class EntryScreen extends React.Component {
         this.props.navigation.setParams({
             isEditing: true
         });
-        this.setState({isEditing: true});
+        this.setState({isEditing: true}, () => {
+            // When editing an entry, focus on text input.
+            this._formInput.focus();
+
+            // Scrolls to botton after form input is focused.
+            setTimeout(() => {
+                this._scrollView.scrollToEnd();
+            }, 250);
+        });
     }
 
     /**
@@ -311,30 +328,38 @@ class EntryScreen extends React.Component {
      */
     render() {
         return (
-            <ScrollView style={Styles.appBackground}>
-                <FormInput
-                    value={this.state.entry.entry}
-                    multiline={true}
-                    numberOfLines={10}
-                    editable={this.state.isEditing}
-                    // autoFocus={true} // Focus input on componentDidMount.
-                    placeholder="How was your day?" // TODO: Translate this.
-                    onChangeText={(text) => this.setState(prevState => ({
-                        entry: {
-                            ...prevState.entry,
-                            entry: text
-                        }
-                    }))}
-                ></FormInput>
-                
-                <CalendarModal
-                    visible={this.state.isCalendarVisible}
-                    onRequestClose={() => this.setCalendarVisible(false)}
-                    current={this.state.entry.date}
-                    markedDates={this.state.markedDates}
-                    onDayPress={(day) => this.onChangeDate(day)}
-                ></CalendarModal>
-            </ScrollView>
+            <KeyboardAvoidingView style={Styles.appBackground}>
+                <ScrollView 
+                    style={Styles.appBackground} 
+                    ref={(component) => this._scrollView = component}>
+                    <FormInput
+                        value={this.state.entry.entry}
+                        multiline={true}
+                        scrollEnabled={false}
+                        numberOfLines={10}
+                        editable={this.state.isEditing}
+                        // autoFocus={true} // Focus input on componentDidMount.
+                        placeholder="How was your day?" // TODO: Translate this.
+                        onRef={(component) => this._formInput = component}
+                        onChangeText={(text) => {
+                            this.setState(prevState => ({
+                                entry: {
+                                    ...prevState.entry,
+                                    entry: text
+                                }
+                            }))
+                        }}
+                    ></FormInput>
+                    
+                    <CalendarModal
+                        visible={this.state.isCalendarVisible}
+                        onRequestClose={() => this.setCalendarVisible(false)}
+                        current={this.state.entry.date}
+                        markedDates={this.state.markedDates}
+                        onDayPress={(day) => this.onChangeDate(day)}
+                    ></CalendarModal>
+                </ScrollView>
+            </KeyboardAvoidingView>
         )
     }
 }
