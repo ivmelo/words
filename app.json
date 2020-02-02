@@ -8,7 +8,7 @@
       "ios",
       "android"
     ],
-    "version": "0.2.3",
+    "version": "0.2.4",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "splash": {
@@ -37,7 +37,7 @@
       "permissions": [
         "USE_FINGERPRINT"
       ],
-      "versionCode": 5
+      "versionCode": 6
     }
   }
 }
