@@ -8,7 +8,7 @@
       "ios",
       "android"
     ],
-    "version": "0.2.2",
+    "version": "0.2.3",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "splash": {
@@ -34,8 +34,10 @@
     },
     "android": {
       "package": "com.ivmelo.words",
-      "permissions": [],
-      "versionCode": 4
+      "permissions": [
+        "USE_FINGERPRINT"
+      ],
+      "versionCode": 5
     }
   }
 }
