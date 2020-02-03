@@ -12,6 +12,7 @@ import FormInput from '../components/FormInput';
 import Entry from '../models/Entry';
 import CalendarModal from '../components/CalendarModal';
 import Styles from '../styles/style';
+import Constants from 'expo-constants';
 
 /**
  * The Entry screen of the app. Used to add and edit entries.
@@ -83,16 +84,20 @@ class EntryScreen extends React.Component {
         if (entryId) {
             entry = await Entry.find(entryId);
         } else {
-            let year = this.props.navigation.getParam('year', false);
-            let month = this.props.navigation.getParam('month', false);
+            let template = new Date();
+            let year = this.props.navigation.getParam('year', null);
+            let month = this.props.navigation.getParam('month', null);
+            let day = template.getDate();
 
             // Creates a new Entry() object based on the selected date in the previous screen.
             entry = new Entry();
-            if (year && month) {
-                entry.date = new Date(year, month, 1);
-            } else {
-                entry.date = new Date();
-            }
+
+            if (year == null || month == null) {
+                year = template.getFullYear();
+                month = template.getMonth();
+            } 
+
+            entry.date = new Date(year, month, day);
         }
 
         if (! entryId) {
@@ -327,8 +332,13 @@ class EntryScreen extends React.Component {
      * React Native Render function.
      */
     render() {
-        return (
-            <KeyboardAvoidingView style={Styles.appBackground}>
+        return (                
+            <KeyboardAvoidingView 
+                style={{flex: 1}}
+                behavior={Constants.appOwnership === 'expo' ? 'height' : 'padding'}
+                keyboardVerticalOffset={80} // Compensates for the navigation bar.
+                > 
+                
                 <ScrollView 
                     style={Styles.appBackground} 
                     ref={(component) => this._scrollView = component}>
@@ -350,15 +360,15 @@ class EntryScreen extends React.Component {
                             }))
                         }}
                     ></FormInput>
-                    
-                    <CalendarModal
-                        visible={this.state.isCalendarVisible}
-                        onRequestClose={() => this.setCalendarVisible(false)}
-                        current={this.state.entry.date}
-                        markedDates={this.state.markedDates}
-                        onDayPress={(day) => this.onChangeDate(day)}
-                    ></CalendarModal>
                 </ScrollView>
+
+                <CalendarModal
+                    visible={this.state.isCalendarVisible}
+                    onRequestClose={() => this.setCalendarVisible(false)}
+                    current={this.state.entry.date}
+                    markedDates={this.state.markedDates}
+                    onDayPress={(day) => this.onChangeDate(day)}
+                ></CalendarModal>
             </KeyboardAvoidingView>
         )
     }
